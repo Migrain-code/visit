@@ -1,0 +1,58 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# ---------------------------------------------------------------
+# Tarayıcı önbelleği (PageSpeed: "Verimli önbellek süreleri kullanın")
+#
+# - Derlenmiş dosyaların (build/assets) adı içeriğe göre değişir: bir yıl ve
+#   "immutable" güvenlidir.
+# - Görseller ve yazı tipleri bir yıl: panelden yüklenen dosya her seferinde yeni
+#   adla kaydedilir, sabit adlı logolar ?v= ile sürümlenir (versioned_asset).
+# - HTML sayfalar bu kurallardan etkilenmez: Laravel "no-cache" gönderir.
+# ---------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(?:webp|png|jpe?g|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+    # Adında içerik özeti olan derlenmiş dosyalar: "app-BhSECj4E.js" gibi.
+    <FilesMatch "-[A-Za-z0-9_-]{8}\.(?:css|js|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

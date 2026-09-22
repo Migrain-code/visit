@@ -1,0 +1,21 @@
+// ---------------------------------------------------------------
+// Font Awesome — sitenin ikonları
+//
+// Eskiden JS içinden "all.min.css" olarak yükleniyordu: sayfanın ilk çizimini
+// engelleyen ikinci bir CSS dosyasıydı ve yazı tipleri "font-display: block" ile
+// geliyordu. Şimdi:
+//   - ayrı ve ENGELLEMEYEN bir dosya (metin ikonları beklemeden görünür),
+//   - yazı tipleri "swap" ile (PageSpeed "yazı tipi görüntüleme" uyarısı).
+// Tüm ikon sınıfları korunur: panelden hizmetlere istenen ikon yazılabilir.
+// ---------------------------------------------------------------
+// $font-path bu dosyaya GÖRE verilir: yol bir değişkenden üretildiği için Vite onu
+// Font Awesome'ın kendi klasörüne göre çözemiyor; varsayılan "../webfonts" canlıda
+// /build/webfonts/ adresine gider ve TÜM ikonlar kaybolurdu.
+@use '@fortawesome/fontawesome-free/scss/variables' with (
+    $font-display: swap,
+    $font-path: '../../node_modules/@fortawesome/fontawesome-free/webfonts'
+);
+@use '@fortawesome/fontawesome-free/scss/fontawesome';
+@use '@fortawesome/fontawesome-free/scss/solid';
+@use '@fortawesome/fontawesome-free/scss/regular';
+@use '@fortawesome/fontawesome-free/scss/brands';

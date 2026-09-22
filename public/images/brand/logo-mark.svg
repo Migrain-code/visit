@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Visit Tur">
+  <defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12b5cb"/><stop offset="1" stop-color="#0a3d91"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#vg)"/>
+  <path d="M32 12c-8.3 0-15 6.6-15 14.8 0 10.4 12.2 23 14 24.8a1.4 1.4 0 0 0 2 0c1.8-1.8 14-14.4 14-24.8C47 18.600 40.300 12 32 12z" fill="#fff"/>
+  <circle cx="32" cy="27" r="9" fill="#ff6a1f"/>
+  <path d="M23.500 30.500c3-2.600 5.600-2.600 8.500-.600s5.500 2 8.500-.600" fill="none" stroke="#fff" stroke-width="2.400" stroke-linecap="round"/>
+</svg>
