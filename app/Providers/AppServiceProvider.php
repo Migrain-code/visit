@@ -39,8 +39,10 @@ use App\Policies\TourDeparturePolicy;
 use App\Policies\TourGroupPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VehiclePolicy;
+use App\Support\Queue\SharedHostingWorker;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Worker;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -51,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Hosting pcntl fonksiyonlarını kapatıyor; Laravel'in işçisi bunlarla çöküyordu.
+        $this->app->extend('queue.worker', fn (Worker $worker) => SharedHostingWorker::from($worker));
+
         // İstek başına bir kez: ayarlar ve menü verisi. "scoped" kayıtlar her kuyruk
         // işinin başında da sıfırlanır, böylece uzun yaşayan işçi eski veriyle kalmaz.
         $this->app->scoped(Setting::MEMO, fn () => Setting::loadFromStore());

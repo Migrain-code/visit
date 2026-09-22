@@ -125,7 +125,7 @@ Saat dilimi `Europe/Istanbul` (`APP_TIMEZONE`). Cache/session/queue sürücüler
 
 - cPanel + LiteSpeed + CloudLinux alt-php82 + Cloudflare. **Terminal yok.**
 - Dağıtım: cPanel **Git Version Control** → "Update from Remote" (GitHub). `vendor/` elle yüklenir.
-- Kapalı PHP fonksiyonları: `proc_open`, `exec`, `symlink`, `escapeshellarg`, `highlight_file`. PHP 8'de kapalı
+- Kapalı PHP fonksiyonları: `proc_open`, `pcntl_*`, `exec`, `symlink`, `escapeshellarg`, `highlight_file`. PHP 8'de kapalı
   fonksiyon çağırmak `@` ile bastırılamayan Error fırlatır → `function_exists` ile koru.
   `tests/Feature/SharedHostingCompatibilityTest.php` bunu sınar.
 - **Zamanlanmış görevler `InProcess::command()` ile eklenir, `Schedule::command()` ile DEĞİL**
@@ -135,6 +135,17 @@ Saat dilimi `Europe/Istanbul` (`APP_TIMEZONE`). Cache/session/queue sürücüler
 - "Önbellekleri oluştur" (`optimize`) taze bir uygulama başlatır; `CommandRunner::preserveApplicationState`
   panel isteğinin container'ını ve Livewire kancalarını geri verir (yoksa sonraki tıklama
   "Undefined array key children" ile düşer).
+- **Kuyruk işçisi `App\Support\Queue\SharedHostingWorker`** (`AppServiceProvider::register`'da
+  `extend('queue.worker')`). Hostingde pcntl eklentisi yüklü ama `pcntl_*` fonksiyonları kapalı; Laravel'in
+  işçisi yalnız eklentiye bakıp `pcntl_async_signals()` çağırdığı için montaj'da cron'daki `queue:work` her
+  dakika çöküyor, işler birikiyordu (panel: "Kuyruk işçisi çalışmıyor"). Bu işçi fonksiyonlara da bakar.
+- **"Update from Remote" → "could not contact the remote repository" çoğu zaman AĞ DEĞİLDİR.** cPanel,
+  sunucuda elle değiştirilmiş ya da elle yüklenmiş (git'teki yeni dosyayla aynı adlı) bir dosya birleştirmeyi
+  engellediğinde de bu mesajı verir. Montaj'da sebep elle yüklenen iki logoydu; hosting firması "bizde sorun
+  yok" dedi ve haklıydı. Git'teki dosyalar Dosya Yöneticisi ile elle yüklenmez/düzenlenmez; elle yalnız
+  `.env` (ve montaj'da `public/build`). Teşhis için montaj oturumunda salt okunur bir PHP betiği yazıldı:
+  `.git/index`'i okuyup çalışma ağacıyla karşılaştırır, kilit dosyalarına ve GitHub bağlantısına bakar
+  (betik saklanmadı; gerekirse aynı mantıkla yeniden yazılır).
 - MySQL için `DB_HOST=localhost` (soket). cPanel'in `AddHandler application/x-httpd-alt-php82`
   satırı tüm .php dosyalarını 404 yaptı; eklenmemeli.
 - `storage:link` panelden olmazsa Sistem Komutları sayfası tek seferlik cron satırı verir.
@@ -145,8 +156,7 @@ Saat dilimi `Europe/Istanbul` (`APP_TIMEZONE`). Cache/session/queue sürücüler
 
 ## Açık işler (öncelik sırasıyla)
 
-1. **Git deposu yok.** `git init` yapılmadı, GitHub deposu açılmadı. Kullanıcı depo adresini verince
-   ilk commit + push. (Commit mesajı sonuna oturumun istediği Co-Authored-By satırı.)
+1. ~~Git deposu yok.~~ Yapıldı: `https://github.com/Migrain-code/visit.git`, `main` gönderildi.
 2. **Canlıda ilk kurulum yolu yok:** panelde `db:seed` güvenlik için yasak (`CommandCatalog::FORBIDDEN`),
    bu yüzden sunucuda ilk yönetici ve örnek içerik oluşturulamaz. Seçenekler: yerel `visit_tur`'u
    phpMyAdmin'e aktarmak ya da yalnız `AdminUserSeeder` + içerik seeder'larını çalıştıran güvenli bir

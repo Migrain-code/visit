@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Support\Queue\SharedHostingWorker;
+use Illuminate\Queue\Console\WorkCommand;
 use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
 
@@ -123,5 +125,21 @@ class SharedHostingCompatibilityTest extends TestCase
                 );
             }
         }
+    }
+
+    /**
+     * Hosting pcntl fonksiyonlarını kapatıyor ama eklentiyi yüklü bırakıyor. Laravel'in
+     * işçisi yalnız eklentiye bakıp bu fonksiyonları çağırdığı için cron'daki queue:work
+     * her dakika çöküyor, kuyruktaki işler birikiyordu (montaj'da canlıda yaşandı).
+     */
+    public function test_queue_worker_checks_pcntl_functions_not_just_the_extension(): void
+    {
+        $worker = $this->app->make('queue.worker');
+
+        $this->assertInstanceOf(SharedHostingWorker::class, $worker);
+
+        // queue:work komutu da bu işçiyi kullanmalı.
+        $command = $this->app->make(WorkCommand::class);
+        $this->assertSame($worker, (fn () => $this->worker)->call($command));
     }
 }
