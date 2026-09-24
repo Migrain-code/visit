@@ -119,10 +119,20 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasPermission(Permission::GroupsManage);
     }
 
-    /** Yolcu verisini (ad, TC, telefon) görebilir mi? Rehber yalnız kendi turlarında görür (sorgu kapsamı). */
+    /**
+     * BÜTÜN turların yolcu verisini (ad, TC, telefon) görebilir mi?
+     * Yalnız yolcu ekleyen personel ve rehber göremez: onlar kendi girdikleri gruplarla
+     * rehberi oldukları turları görür (sorgu kapsamları: scopeVisibleTo).
+     */
     public function seesPassengers(): bool
     {
         return $this->hasAnyPermission(Permission::passengerAccess());
+    }
+
+    /** Araç filosunu görebilir mi? */
+    public function seesVehicles(): bool
+    {
+        return $this->hasAnyPermission([Permission::VehiclesManage, Permission::AllocationManage, Permission::ReportsView]);
     }
 
     public function managesRequests(): bool
@@ -156,10 +166,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasPermission(Permission::SettingsManage);
     }
 
-    /** Hiç yetkisi olmayan hesap: yalnız rehberi olduğu turları görür. */
+    /** Sınırlı hesap (rehber ya da yalnız yolcu ekleyen): yalnız rehberi olduğu turları görür. */
     public function isGuideOnly(): bool
     {
         return ! $this->isSuperAdmin() && ! $this->seesPassengers();
+    }
+
+    /** Tur menüsü: bütün turları gören ya da en az bir turun rehberi olan. */
+    public function seesTourList(): bool
+    {
+        return $this->seesPassengers() || TourDeparture::query()->visibleTo($this)->exists();
     }
 
     /** Turun rehberi mi (turun kendisinde ya da araçlarından birinde)? */

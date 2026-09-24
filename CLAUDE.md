@@ -66,8 +66,11 @@ turdan silinir, grupları bekleyenlere döner) → "Grupları yerleştir" (keepE
 `allocation.manage`, `groups.create` (yalnız kendi girdiği grubu düzenler/siler), `groups.manage`, `requests.manage`
 (iletişim talepleri + iş başvuruları), `commissions.manage`, `reports.view`, `users.manage`, `settings.manage`.
 Yardımcılar `User` modelinde (`managesTours()`, `managesOperations()`, `registersGroups()`, `seesPassengers()`…).
-**Yetkisiz hesap = rehber:** yalnız rehberi olduğu turları (turun `guide_id`'si ya da bir aracının `guide_id`'si)
-ve kendi kazancını görür (`scopeVisibleTo`, `isGuideOf`). Eski `role` sütunu DB'de duruyor, kullanılmıyor.
+**Bütün yolcu verisini görenler** (`Permission::passengerAccess`): tours.manage, allocation.manage, groups.manage,
+reports.view, commissions.manage. **Yalnız `groups.create` olan personel sınırlıdır:** Tüm Turlar / Yolcular / Araçlar /
+Araç Geçmişi menülerini görmez, Gruplar'da yalnız kendi girdiklerini görür (`TourGroup::scopeVisibleTo`), Yolcu
+Ekle'de her açık turu seçebilir. **Yetkisiz hesap = rehber:** yalnız rehberi olduğu turları (turun `guide_id`'si ya da
+bir aracının `guide_id`'si) ve kendi kazancını görür (`scopeVisibleTo`, `isGuideOf`, `seesTourList`). Eski `role` sütunu DB'de duruyor, kullanılmıyor.
 Yetki yöneticisi süper yöneticiyi düzenleyemez; kimse kendini silemez. Testte kullanıcı değiştirmek için
 `tests/TestCase::actingAs` oturumu sıfırlar (Filament AuthenticateSession 302 vermesin diye).
 
@@ -170,6 +173,8 @@ offcanvas) + SCSS (site) · Tailwind 4 yalnız panel teması (`resources/css/fil
    DB'de duruyor; istenirse ayrı bir göçle düşürülür.
 
 ## Bilinen tuzaklar
+
+- TC doğrulaması yalnız 11 hane (`App\Rules\TcKimlikNo`); kontrol basamağı kullanıcı isteğiyle kapalı.
 
 - **Filament form doldurma:** forma değer vererek `fill()` alan varsayılanlarını devre dışı bırakır →
   `CreateTourGroup::fillForm` ön doldurmaya `status`, `paid_amount`, boş yolcu satırını ekler.

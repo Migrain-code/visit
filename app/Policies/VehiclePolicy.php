@@ -5,13 +5,13 @@ namespace App\Policies;
 use App\Models\User;
 
 /**
- * Araç filosu: yolcu verisini gören herkes listeyi görür, "araç filosu" yetkisi yönetir.
+ * Araç filosu: araç/dağıtım/rapor yetkisi olan görür, "araç filosu" yetkisi yönetir.
  */
 class VehiclePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->seesPassengers() || $user->managesVehicles();
+        return $user->seesVehicles();
     }
 
     public function view(User $user): bool

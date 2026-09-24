@@ -96,7 +96,8 @@ class PermissionTest extends TestCase
             '/admin/gruplar/create' => ['groups.create', 'groups.manage'],
             '/admin/turlar/create' => ['tours.manage'],
             '/admin/yolcular' => Permission::passengerAccess(),
-            '/admin/arac-gecmisi' => Permission::passengerAccess(),
+            '/admin/vehicles' => ['vehicles.manage', 'allocation.manage', 'reports.view'],
+            '/admin/arac-gecmisi' => ['vehicles.manage', 'allocation.manage', 'reports.view'],
         ];
 
         $rows = [];
@@ -256,6 +257,45 @@ class PermissionTest extends TestCase
     }
 
     // ---------- Grup kaydı ----------
+
+    public function test_registrar_only_sees_their_own_groups_and_no_tour_or_vehicle_menus(): void
+    {
+        $registrar = $this->staff([Permission::GroupsCreate]);
+        $colleague = $this->registrar();
+        $departure = $this->departure();
+
+        $own = $this->group($departure, ['created_by' => $registrar->id]);
+        $others = $this->group($departure, ['created_by' => $colleague->id]);
+        $others->passengers()->create(['first_name' => 'Gizli', 'last_name' => 'Yolcu', 'tc_no' => '10000000146']);
+
+        $this->assertFalse($registrar->seesPassengers(), 'yalnız yolcu ekleyen bütün yolcuları görmez');
+        $this->assertTrue($registrar->can('view', $own));
+        $this->assertFalse($registrar->can('view', $others));
+        $this->assertFalse($registrar->can('view', $departure), 'rehberi olmadığı turu açamaz');
+
+        $visible = TourGroup::query()->visibleTo($registrar)->pluck('id');
+        $this->assertTrue($visible->contains($own->id));
+        $this->assertFalse($visible->contains($others->id));
+
+        $this->actingAs($registrar);
+
+        $html = $this->get('/admin')->assertOk()->getContent();
+        foreach (['Tüm Turlar', 'Yolcular', 'Araç Geçmişi', '>Araçlar<'] as $label) {
+            $this->assertStringNotContainsString($label, $html, $label.' menüde görünmemeli');
+        }
+        $this->assertStringContainsString('Yolcu Ekle', $html);
+
+        $this->get('/admin/gruplar')->assertOk()->assertDontSee('Gizli Yolcu');
+        $this->get('/admin/gruplar/create')->assertOk();
+        // Başkasının grubu sorgudan elenir (404) ya da ilke reddeder (403); ikisi de kabul.
+        $this->assertContains($this->get('/admin/gruplar/'.$others->id)->getStatusCode(), [403, 404]);
+        $this->assertContains($this->get('/admin/turlar/'.$departure->id)->getStatusCode(), [403, 404]);
+        $this->assertContains($this->get('/admin/turlar/'.$departure->id.'/arac-dagilimi')->getStatusCode(), [403, 404]);
+        $this->get('/admin/yolcular')->assertForbidden();
+        $this->get('/admin/vehicles')->assertForbidden();
+        $this->get('/admin/arac-gecmisi')->assertForbidden();
+        $this->get(route('admin.manifest', $departure))->assertForbidden();
+    }
 
     public function test_registrar_can_change_only_their_own_groups(): void
     {

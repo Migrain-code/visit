@@ -239,7 +239,10 @@ h1, h2, h3 { letter-spacing: -.02em; }
     .modal-content { overflow: hidden; }
     .modal-body { padding: 1.25rem; }
     .modal-title { font-size: 1.4rem; margin-bottom: .6rem; }
-    .modal-footer { border-top: 1px solid $line; gap: .5rem; padding: 1rem 1.25rem; }
+    .modal-footer { border-top: 1px solid $line; padding: 1rem 1.25rem; }
+    // Altta yan yana: yuvarlak WhatsApp ikonu + geniş "Katıl" düğmesi; telefonda da alt alta düşmez.
+    .tour-modal-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: .6rem; > * { margin: 0; } .btn-sun { flex: 1; } }
+    .btn-icon { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 1.5rem; flex-shrink: 0; }
     .btn-close { position: absolute; top: .85rem; right: .85rem; z-index: 3; background-color: rgba($deep, .45); border-radius: 50%; padding: .65rem; opacity: 1; }
 }
 .tour-modal-media { position: relative; aspect-ratio: 16 / 10; background: $mist; img { width: 100%; height: 100%; object-fit: cover; display: block; } }

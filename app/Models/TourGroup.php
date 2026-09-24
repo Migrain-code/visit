@@ -130,11 +130,16 @@ class TourGroup extends Model
         return $query->where('status', '!=', GroupStatus::Cancelled->value);
     }
 
-    /** Yetkisiz hesap (rehber) yalnız rehberi olduğu turların gruplarını görür. */
+    /**
+     * Sınırlı hesap yalnız KENDİ girdiği grupları ve rehberi olduğu turların gruplarını görür.
+     * Bütün turların yolcu verisini gören yetkiler (Permission::passengerAccess) her şeyi görür.
+     */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
         if ($user && $user->isGuideOnly()) {
-            return $query->whereHas('departure', fn (Builder $q) => $q->visibleTo($user));
+            return $query->where(fn (Builder $q) => $q
+                ->where('created_by', $user->getKey())
+                ->orWhereHas('departure', fn (Builder $d) => $d->visibleTo($user)));
         }
 
         return $query;

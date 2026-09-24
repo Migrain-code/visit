@@ -7,10 +7,11 @@
 @endphp
 @if ($user)
     @php
-        $tabs = [
-            ['Panel', url('/admin'), 'heroicon-o-home', request()->is('admin')],
-            ['Turlar', \App\Filament\Resources\TourDepartures\TourDepartureResource::getUrl('index'), 'heroicon-o-map', request()->is('admin/turlar*')],
-        ];
+        $tabs = [['Panel', url('/admin'), 'heroicon-o-home', request()->is('admin')]];
+
+        if ($user->seesTourList()) {
+            $tabs[] = ['Turlar', \App\Filament\Resources\TourDepartures\TourDepartureResource::getUrl('index'), 'heroicon-o-map', request()->is('admin/turlar*')];
+        }
 
         if ($user->registersGroups()) {
             $tabs[] = ['Yolcu Ekle', \App\Filament\Resources\TourGroups\TourGroupResource::getUrl('create'), 'heroicon-o-user-plus', request()->is('admin/gruplar/create*')];

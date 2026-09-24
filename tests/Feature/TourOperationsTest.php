@@ -464,9 +464,9 @@ class TourOperationsTest extends TestCase
         $departure = $this->departure([19]);
         $base = ['tour_departure_id' => $departure->id, 'status' => 'confirmed'];
 
-        // Tek hanesi yanlış yazılmış numara: kontrol basamağı tutmaz.
+        // 11 haneden kısa numara reddedilir.
         Livewire::test(CreateTourGroup::class)
-            ->fillForm($base + ['passengers' => [$this->passenger(['tc_no' => '10000000147'])]])
+            ->fillForm($base + ['passengers' => [$this->passenger(['tc_no' => '1234567890'])]])
             ->call('create')
             ->assertHasFormErrors();
 
@@ -649,9 +649,9 @@ class TourOperationsTest extends TestCase
         $this->assertSame(23, $departure->fresh()->unassigned_passengers);
     }
 
-    public function test_registrar_sees_the_board_but_cannot_change_it(): void
+    public function test_group_manager_sees_the_board_but_cannot_change_it(): void
     {
-        $this->actingAs($this->registrar());
+        $this->actingAs($this->staff([\App\Enums\Permission::GroupsManage]));
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
         $departure = $this->departure([19]);

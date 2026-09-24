@@ -46,7 +46,7 @@ enum Permission: string
             self::ToursManage => 'Tüm Turlar\'da yeni tur açar, tarih/fiyat/görsel değiştirir, sıralar ve siler.',
             self::VehiclesManage => 'Araçlar sayfasında filoya araç ekler, plaka ve koltuk bilgisini değiştirir.',
             self::AllocationManage => 'Araç Liste Sihirbazı ve Araç Dağılımı: tura araç atar, grupları araçlara yerleştirir, taşır.',
-            self::GroupsCreate => 'Yolcu Ekle ekranını kullanır; yalnız kendi girdiği grupları düzenler ve siler.',
+            self::GroupsCreate => 'Yolcu Ekle ekranını kullanır; yalnız kendi girdiği grupları görür, düzenler ve siler. Tur listesini, yolcuları ve araçları görmez.',
             self::GroupsManage => 'Herkesin girdiği grupları düzenler, siler; yolcu listesini yazdırır.',
             self::RequestsManage => 'Siteden gelen iletişim taleplerini ve iş başvurularını görür, işler, personele atar.',
             self::CommissionsManage => 'Tur sayfasında "Komisyon ekle" ile personele komisyon yazar.',
@@ -56,10 +56,13 @@ enum Permission: string
         };
     }
 
-    /** Yolcu verisini (ad, TC, telefon) görmeye yeten yetkiler. */
+    /**
+     * BÜTÜN turların yolcu verisini (ad, TC, telefon) görmeye yeten yetkiler.
+     * "Yolcu ekleme" bilerek dışarıda: o personel yalnız kendi girdiği grupları görür.
+     */
     public static function passengerAccess(): array
     {
-        return [self::ToursManage, self::AllocationManage, self::GroupsCreate, self::GroupsManage, self::ReportsView];
+        return [self::ToursManage, self::AllocationManage, self::GroupsManage, self::ReportsView, self::CommissionsManage];
     }
 
     /** @return array<string, string> */

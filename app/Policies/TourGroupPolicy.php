@@ -25,6 +25,10 @@ class TourGroupPolicy
             return true;
         }
 
+        if ($user->registersGroups() && $this->owns($user, $group)) {
+            return true;
+        }
+
         return $group->departure !== null && $user->isGuideOf($group->departure);
     }
 

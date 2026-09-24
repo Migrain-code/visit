@@ -51,6 +51,12 @@ class TourDepartureResource extends Resource
     /** Özet / Araç Dağılımı / Düzenle sekmeleri üstte durur; pano tam genişlikte kalır. */
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
+    /** Bütün turları görmeyen ve hiçbir turun rehberi olmayan personelin menüsünde durmaz. */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->seesTourList() ?? false;
+    }
+
     public static function getRecordTitle(?Model $record): ?string
     {
         return $record?->label;

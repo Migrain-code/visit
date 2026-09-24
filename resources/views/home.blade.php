@@ -102,11 +102,11 @@
                             <div class="content-prose">{!! $tour->description !!}</div>
                         @endif
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer tour-modal-actions">
                         @if (whatsapp_number())
-                            <a class="btn btn-whatsapp" href="{{ whatsapp_url($tour->title) }}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp</a>
+                            <a class="btn btn-whatsapp btn-icon" href="{{ whatsapp_url($tour->title) }}" target="_blank" rel="noopener" aria-label="WhatsApp'tan sor" title="WhatsApp'tan sor"><i class="fa-brands fa-whatsapp"></i></a>
                         @endif
-                        <a class="btn btn-sun flex-grow-1" href="{{ route('contact', ['tur' => $tour->id]) }}">Katılmak İstiyorum<i class="fa-solid fa-arrow-right"></i></a>
+                        <a class="btn btn-sun" href="{{ route('contact', ['tur' => $tour->id]) }}">Katılmak İstiyorum<i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>

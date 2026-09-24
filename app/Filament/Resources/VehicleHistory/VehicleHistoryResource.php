@@ -48,7 +48,7 @@ class VehicleHistoryResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->seesPassengers() ?? false;
+        return auth()->user()?->seesVehicles() ?? false;
     }
 
     public static function getEloquentQuery(): Builder

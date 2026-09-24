@@ -6,36 +6,23 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
- * T.C. kimlik numarası doğrulaması (11 hane + iki kontrol basamağı).
+ * T.C. kimlik numarası: yalnız 11 hane olduğu denetlenir.
  *
- * Yalnız BİÇİMİ doğrular: numaranın gerçekten o kişiye ait olduğunu söylemez (o, NVİ
- * sorgusu gerektirir). Amaç, elle girişte bir hanenin yanlış yazılmasını yakalamaktır;
- * yanlış TC ile kesilen sigorta poliçesi geçersizdir.
+ * Kontrol basamağı algoritması BİLEREK uygulanmıyor (kullanıcı isteği): personel
+ * deneme verisi ve eksik bilgiyle de kayıt girebilsin. Boşluk, tire gibi ayraçlar
+ * kayıtta zaten silinir (Passenger::saving).
  */
 class TcKimlikNo implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! static::isValid((string) $value)) {
-            $fail('Geçerli bir T.C. kimlik numarası girin (11 hane).');
+            $fail('T.C. kimlik numarası 11 haneli olmalıdır.');
         }
     }
 
     public static function isValid(string $value): bool
     {
-        if (! preg_match('/^[1-9][0-9]{10}$/', $value)) {
-            return false;
-        }
-
-        $d = array_map('intval', str_split($value));
-
-        $odd = $d[0] + $d[2] + $d[4] + $d[6] + $d[8];
-        $even = $d[1] + $d[3] + $d[5] + $d[7];
-
-        // PHP'de % negatif sonuç verebilir; +10 ile pozitife çekilir.
-        $tenth = ((($odd * 7 - $even) % 10) + 10) % 10;
-        $eleventh = (array_sum(array_slice($d, 0, 10))) % 10;
-
-        return $d[9] === $tenth && $d[10] === $eleventh;
+        return preg_match('/^[0-9]{11}$/', preg_replace('/\D/', '', $value) ?? '') === 1;
     }
 }
