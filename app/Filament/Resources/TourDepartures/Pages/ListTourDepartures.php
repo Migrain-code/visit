@@ -13,7 +13,7 @@ class ListTourDepartures extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Yeni tur kaydı'),
+            CreateAction::make()->label('Yeni tur'),
         ];
     }
 }

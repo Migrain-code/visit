@@ -10,7 +10,7 @@ class Passenger extends Model
 {
     protected $fillable = [
         'tour_group_id', 'first_name', 'last_name', 'is_foreign', 'tc_no', 'passport_no',
-        'phone', 'age', 'gender', 'notes', 'sort_order',
+        'phone', 'pickup_point', 'age', 'gender', 'notes', 'sort_order',
     ];
 
     protected $attributes = [
@@ -41,7 +41,7 @@ class Passenger extends Model
             }
         });
 
-        // Grubun büyüklüğü yolcu satırlarından türer; dağıtım bu sayıya güvenir.
+        // Grubun büyüklüğü ve iletişim kişisi yolcu satırlarından türer; dağıtım bu sayıya güvenir.
         static::saved(fn (self $passenger) => $passenger->group?->refreshPassengerCount());
         static::deleted(fn (self $passenger) => $passenger->group?->refreshPassengerCount());
     }

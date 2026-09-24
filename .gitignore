@@ -25,7 +25,3 @@ Thumbs.db
 # NOT: public/build ve public/{js,css,fonts}/filament BİLEREK depoya dahildir.
 # Sunucuda terminal yok: "git pull" tek başına eksiksiz bir dağıtım olmalı. Derlenmiş
 # dosyalar ayrıca elle yüklenirse kodla uyumsuz kalabiliyor (ikonlar kaybolur, form bozulur).
-
-# Zamanlanmış görevle üretilir ve alan adını içerir; yereldeki hâli canlıya gitmemeli.
-/public/llms.txt
-/public/llms-full.txt

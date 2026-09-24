@@ -12,7 +12,7 @@ class EditTourDeparture extends EditRecord
 
     protected static ?string $navigationLabel = 'Düzenle';
 
-    /** Üst sekmelerde yalnız düzenleme yetkisi olana görünür (rehber ve kayıt personeli görmez). */
+    /** Üst sekmelerde yalnız düzenleme yetkisi olana görünür. */
     public static function canAccess(array $parameters = []): bool
     {
         $record = $parameters['record'] ?? null;
@@ -20,7 +20,7 @@ class EditTourDeparture extends EditRecord
         return $record ? TourDepartureResource::canEdit($record) : parent::canAccess($parameters);
     }
 
-    /** Araç ve grup listeleri "Özet" sayfasındadır; burada yalnız sefer bilgisi düzenlenir. */
+    /** Araç ve grup listeleri "Özet" sayfasındadır; burada yalnız tur bilgisi düzenlenir. */
     public function getRelationManagers(): array
     {
         return [];
@@ -30,7 +30,7 @@ class EditTourDeparture extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->tooltip('Yolcu kaydı olan sefer silinemez.'),
+                ->tooltip('Yolcu kaydı olan tur silinemez.'),
         ];
     }
 

@@ -12,16 +12,16 @@
     <title>Yolcu Listesi · {{ $departure->label }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #0c2340; margin: 0; padding: 24px; font-size: 13px; line-height: 1.45; background: #eef6fd; }
+        body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #0d2544; margin: 0; padding: 24px; font-size: 13px; line-height: 1.45; background: #eef6fd; }
         .sheet { max-width: 1000px; margin: 0 auto; background: #fff; padding: 28px 32px; border-radius: 10px; }
-        header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; border-bottom: 2px solid #0a3d91; padding-bottom: 14px; margin-bottom: 18px; }
+        header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; border-bottom: 2px solid #0d2544; padding-bottom: 14px; margin-bottom: 18px; }
         h1 { font-size: 20px; margin: 0 0 4px; }
         h2 { font-size: 15px; margin: 0; }
         .muted { color: #4a5d70; }
         .meta { text-align: right; font-size: 12px; }
         .summary { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 20px; font-size: 12.5px; }
         .vehicle { margin-bottom: 26px; page-break-inside: avoid; }
-        .vehicle-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; background: #0a3d91; color: #fff; padding: 9px 12px; border-radius: 6px 6px 0 0; }
+        .vehicle-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; background: #0d2544; color: #fff; padding: 9px 12px; border-radius: 6px 6px 0 0; }
         .vehicle-head .muted { color: rgba(255,255,255,.78); }
         .vehicle.is-waiting .vehicle-head { background: #b45309; }
         table { width: 100%; border-collapse: collapse; }
@@ -34,7 +34,7 @@
         .sign { width: 70px; }
         .toolbar { max-width: 1000px; margin: 0 auto 14px; display: flex; gap: 8px; justify-content: flex-end; }
         .toolbar button, .toolbar a { border: 0; background: #0d7de0; color: #fff; padding: 9px 18px; border-radius: 999px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 13px; }
-        .toolbar a { background: #fff; color: #0c2340; border: 1px solid #cfdcea; }
+        .toolbar a { background: #fff; color: #0d2544; border: 1px solid #cfdcea; }
         .notice { font-size: 11px; color: #4a5d70; margin-top: 18px; border-top: 1px solid #dfe9f3; padding-top: 10px; }
         @media print {
             body { background: #fff; padding: 0; font-size: 11.5px; }
@@ -54,7 +54,7 @@
     <div class="sheet">
         <header>
             <div>
-                <h1>{{ $departure->tour?->title }}</h1>
+                <h1>{{ $departure->title }}</h1>
                 <div class="muted">
                     Yolcu listesi · {{ $departure->starts_at->translatedFormat('j F Y l, H:i') }}
                     @if ($departure->ends_on && ! $departure->ends_on->isSameDay($departure->starts_at))
@@ -64,8 +64,7 @@
             </div>
             <div class="meta">
                 <strong>{{ site_name() }}</strong><br>
-                Sefer kodu: {{ $departure->code }}<br>
-                @if ($departure->guide) Rehber: {{ $departure->guide->name }} @if ($departure->guide->phone) · {{ $departure->guide->phone }} @endif<br> @endif
+                @if ($departure->guide) Tur rehberi: {{ $departure->guide->name }} @if ($departure->guide->phone) · {{ $departure->guide->phone }} @endif<br> @endif
                 Döküm: {{ now()->format('d.m.Y H:i') }}
             </div>
         </header>
@@ -77,7 +76,7 @@
             <span><strong>{{ $vehicles->count() }}</strong> araç</span>
             <span><strong>{{ $totalPassengers }}</strong> yolcu</span>
             <span><strong>{{ $vehicles->sum(fn ($v) => $v->groups->count()) + $waiting->count() }}</strong> grup</span>
-            @if ($departure->meeting_point)<span>Buluşma: <strong>{{ $departure->meeting_point }}</strong></span>@endif
+            @if ($departure->meeting_point)<span>Kalkış: <strong>{{ $departure->meeting_point }}</strong></span>@endif
             @if ($waiting->isNotEmpty())<span style="color:#b45309"><strong>{{ $waiting->sum('passenger_count') }}</strong> yolcu henüz araca yerleşmedi</span>@endif
         </div>
 
@@ -88,6 +87,7 @@
                     <span class="muted">
                         {{ $vehicle->groups->sum('passenger_count') }} / {{ $vehicle->usable_seats }} yolcu
                         @if ($vehicle->driver_name) · Şoför: {{ $vehicle->driver_name }} @if ($vehicle->driver_phone) ({{ $vehicle->driver_phone }}) @endif @endif
+                        @if ($vehicle->guide) · Rehber: {{ $vehicle->guide->name }} @endif
                     </span>
                 </div>
                 @include('admin.partials.manifest-table', ['groups' => $vehicle->groups])

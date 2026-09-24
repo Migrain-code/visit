@@ -19,21 +19,27 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Yolcu Ekle: turu seç, yolcuları alt alta gir, kaydet → bir grup olur.
+ *
+ * Grup adı otomatik ("Grup 1", "Grup 2"...), iletişim kişisi ilk yolcudur.
+ * Tek ekranda girilen yolcular birlikte yolculuk eder: grup bölünmez.
+ */
 class TourGroupForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Sefer')->schema([
+                Section::make('Tur')->schema([
                     Select::make('tour_departure_id')
-                        ->label('Tur kaydı (sefer)')
+                        ->label('Tur')
                         ->options(fn (?TourGroup $record) => static::departureOptions($record))
                         ->required()
                         ->searchable()
                         ->native(false)
                         ->live()
-                        ->helperText('Yalnız kayda açık, tarihi geçmemiş seferler listelenir.')
+                        ->helperText('Yalnız kayda açık, tarihi geçmemiş turlar listelenir.')
                         ->columnSpan(2),
                     Select::make('status')
                         ->label('Kayıt durumu')
@@ -42,41 +48,29 @@ class TourGroupForm
                         ->required()
                         ->native(false)
                         ->live()
-                        ->helperText('Opsiyon da koltuk tutar; yolcu kimlik bilgileri sonradan tamamlanabilir.'),
+                        ->helperText('Opsiyon da koltuk tutar; kimlik bilgileri sonradan tamamlanabilir.'),
                     TextInput::make('name')
-                        ->label('Grup adı (isteğe bağlı)')
+                        ->label('Grup adı')
                         ->maxLength(100)
-                        ->placeholder('Yılmaz ailesi')
-                        ->helperText('Boş bırakılırsa ilgili kişinin adı kullanılır.'),
-                    TextInput::make('pickup_point')
-                        ->label('Biniş noktası')
-                        ->maxLength(255)
-                        ->placeholder('Ardeşen, X Otel önü')
-                        ->columnSpan(2),
+                        ->placeholder('Boş bırakılırsa "Grup 1", "Grup 2"... verilir')
+                        ->columnSpanFull(),
                 ])->columns(3)->columnSpanFull(),
 
-                Section::make('İlgili kişi')
-                    ->description('Grup adına görüşülecek kişi.')
-                    ->schema([
-                        TextInput::make('contact_name')->label('Ad Soyad')->required()->maxLength(100),
-                        TextInput::make('contact_phone')->label('Telefon')->required()->tel()->maxLength(30),
-                        TextInput::make('contact_email')->label('E-posta')->email()->maxLength(150),
-                    ])->columns(3)->columnSpanFull(),
-
                 Section::make('Yolcular')
-                    ->description('Grubun büyüklüğü buradaki satır sayısıdır. Grup araçlara BÖLÜNMEDEN yerleştirilir: hepsi aynı araçta yolculuk eder.')
+                    ->description('Her yolcu için bir kart doldurun; "+ Yolcu ekle" ile yenisini açın. Buradaki herkes aynı araçta yolculuk eder.')
                     ->schema([
                         Repeater::make('passengers')
                             ->hiddenLabel()
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->schema([
-                                TextInput::make('first_name')->label('Adı')->required()->maxLength(60),
-                                TextInput::make('last_name')->label('Soyadı')->required()->maxLength(60),
+                                TextInput::make('first_name')->label('Ad')->required()->maxLength(60)->autocomplete('off'),
+                                TextInput::make('last_name')->label('Soyad')->required()->maxLength(60)->autocomplete('off'),
                                 TextInput::make('tc_no')
                                     ->label('T.C. kimlik no')
                                     ->mask('99999999999')
                                     ->length(11)
+                                    ->inputMode('numeric')
                                     ->rule(new TcKimlikNo)
                                     ->distinct()
                                     ->rule(fn (Get $get, $record): Closure => static::uniqueInDeparture($get('../../tour_departure_id'), $record))
@@ -87,41 +81,42 @@ class TourGroupForm
                                     ->maxLength(30)
                                     ->required(fn (Get $get) => static::identityRequired($get))
                                     ->visible(fn (Get $get) => (bool) $get('is_foreign')),
-                                TextInput::make('phone')->label('Telefon')->tel()->maxLength(30),
-                                TextInput::make('age')->label('Yaş')->numeric()->minValue(0)->maxValue(120)
-                                    ->required(fn (Get $get) => static::identityRequired($get)),
+                                TextInput::make('phone')->label('Telefon')->tel()->maxLength(30)->placeholder('05xx xxx xx xx'),
+                                TextInput::make('pickup_point')->label('Nereden binecek?')->maxLength(150)->placeholder('Yerleşke önü, Otogar...'),
                                 Select::make('gender')->label('Cinsiyet')->options(Gender::options())->native(false)
                                     ->required(fn (Get $get) => static::identityRequired($get)),
+                                TextInput::make('age')->label('Yaş')->numeric()->minValue(0)->maxValue(120)->inputMode('numeric'),
+                                TextInput::make('notes')->label('Not')->maxLength(255)->placeholder('Koltuk tercihi, sağlık durumu...')->columnSpan(2),
                                 Toggle::make('is_foreign')->label('Yabancı uyruklu (pasaportla)')->live()->columnSpanFull(),
                             ])
-                            // Geniş ekranda bir yolcu tek satıra sığar: kalabalık gruplarda form kısalır.
-                            ->columns(['default' => 1, 'sm' => 2, 'md' => 3, 'xl' => 6])
+                            ->columns(['default' => 1, 'sm' => 2, 'lg' => 4])
                             ->itemLabel(fn (array $state): ?string => trim(($state['first_name'] ?? '').' '.($state['last_name'] ?? '')) ?: 'Yeni yolcu')
-                            ->addActionLabel('Yolcu ekle')
+                            ->addActionLabel('+ Yolcu ekle')
+                            ->addActionAlignment('center')
                             ->minItems(1)
                             ->defaultItems(1)
                             ->maxItems(60)
                             ->collapsible()
+                            ->cloneable()
                             ->columnSpanFull(),
                     ])->columnSpanFull(),
 
                 Section::make('Ödeme ve notlar')->schema([
-                    TextInput::make('total_price')->label('Toplam tutar')->numeric()->minValue(0)->step('0.01')
+                    TextInput::make('total_price')->label('Toplam tutar')->numeric()->minValue(0)->step('0.01')->suffix('₺')
                         ->placeholder(function (Get $get) {
-                            $price = TourDeparture::with('tour')->find($get('tour_departure_id'))?->effective_price;
+                            $price = TourDeparture::query()->find($get('tour_departure_id'))?->effective_price;
                             $count = count((array) $get('passengers'));
 
                             return $price !== null && $count > 0 ? money_label($price * $count).' ('.$count.' × '.money_label($price).')' : null;
                         })
                         ->helperText('Boş bırakılırsa ödeme takibi yapılmaz.'),
-                    TextInput::make('paid_amount')->label('Alınan ödeme')->numeric()->minValue(0)->step('0.01')->default(0),
-                    Textarea::make('notes')->label('Notlar')->rows(3)->columnSpanFull()
-                        ->placeholder('Koltuk tercihi, sağlık durumu, özel talepler...'),
-                ])->columns(2)->columnSpanFull(),
+                    TextInput::make('paid_amount')->label('Alınan ödeme')->numeric()->minValue(0)->step('0.01')->suffix('₺')->default(0),
+                    Textarea::make('notes')->label('Grup notu')->rows(2)->columnSpanFull(),
+                ])->columns(2)->columnSpanFull()->collapsible(),
             ]);
     }
 
-    /** Kesin kayıtta kimlik, yaş ve cinsiyet zorunludur; opsiyonda sonradan tamamlanabilir. */
+    /** Kesin kayıtta kimlik ve cinsiyet zorunludur; opsiyonda sonradan tamamlanabilir. */
     private static function identityRequired(Get $get): bool
     {
         return $get('../../status') !== GroupStatus::Pending->value;
@@ -132,11 +127,10 @@ class TourGroupForm
     {
         return TourDeparture::query()
             ->withSeatStats()
-            ->with('tour:id,title')
             ->where(function (Builder $query) use ($record) {
                 $query->where(fn (Builder $q) => $q->where('status', 'open')->where('starts_at', '>=', now()->startOfDay()));
 
-                // Düzenlemede grubun mevcut seferi, kapalı ya da geçmiş olsa da listede kalır.
+                // Düzenlemede grubun mevcut turu, kapalı ya da geçmiş olsa da listede kalır.
                 if ($record?->tour_departure_id) {
                     $query->orWhere('tour_departures.id', $record->tour_departure_id);
                 }
@@ -144,13 +138,13 @@ class TourGroupForm
             ->orderBy('starts_at')
             ->get()
             ->mapWithKeys(fn (TourDeparture $d) => [
-                $d->id => $d->starts_at->format('d.m.Y').' · '.$d->tour?->title
-                    .($d->seats_left !== null ? ' · '.$d->seats_left.' boş koltuk' : ' · araç atanmadı'),
+                $d->id => $d->starts_at->format('d.m.Y').' · '.$d->title
+                    .($d->empty_seats !== null ? ' · '.$d->empty_seats.' boş koltuk' : ' · araç atanmadı'),
             ])
             ->all();
     }
 
-    /** Aynı kişi aynı sefere iki kez kaydedilemez (başka grupta da olsa). */
+    /** Aynı kişi aynı tura iki kez kaydedilemez (başka grupta da olsa). */
     private static function uniqueInDeparture(mixed $departureId, mixed $record): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail) use ($departureId, $record): void {
@@ -164,11 +158,11 @@ class TourGroupForm
                 ->whereHas('group', fn (Builder $q) => $q
                     ->where('tour_departure_id', $departureId)
                     ->where('status', '!=', GroupStatus::Cancelled->value))
-                ->with('group:id,code,contact_name')
+                ->with('group:id,name,contact_name')
                 ->first();
 
             if ($duplicate) {
-                $fail("Bu T.C. kimlik numarası bu seferde zaten kayıtlı ({$duplicate->group?->code} · {$duplicate->group?->contact_name}).");
+                $fail("Bu T.C. kimlik numarası bu turda zaten kayıtlı ({$duplicate->group?->name} · {$duplicate->group?->contact_name}).");
             }
         };
     }

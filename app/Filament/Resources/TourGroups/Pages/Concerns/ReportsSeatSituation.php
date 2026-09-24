@@ -22,15 +22,16 @@ trait ReportsSeatSituation
             return;
         }
 
-        $board = Action::make('board')
-            ->label('Araç dağılımını aç')
-            ->url(TourDepartureResource::getUrl('allocation', ['record' => $departure]));
+        $canAllocate = auth()->user()?->can('allocate', $departure) ?? false;
+        $actions = $canAllocate
+            ? [Action::make('board')->label('Araç dağılımını aç')->url(TourDepartureResource::getUrl('allocation', ['record' => $departure]))]
+            : [];
 
         if ($departure->sale_limit !== null && $departure->seats_taken > $departure->sale_limit) {
             Notification::make()
-                ->title('Sefer kapasitesi aşıldı')
-                ->body("Kayıtlı yolcu: {$departure->seats_taken}, kapasite: {$departure->sale_limit}. Sefere araç ekleyin ya da kontenjanı artırın.")
-                ->danger()->persistent()->actions([$board])->send();
+                ->title('Tur kapasitesi aşıldı')
+                ->body("Kayıtlı yolcu: {$departure->seats_taken}, kapasite: {$departure->sale_limit}. Tura araç eklenmeli ya da kontenjan artırılmalı.")
+                ->danger()->persistent()->actions($actions)->send();
 
             return;
         }
@@ -38,17 +39,17 @@ trait ReportsSeatSituation
         if ($hadVehicle && ! $group->departure_vehicle_id) {
             Notification::make()
                 ->title('Grup araçtan çıkarıldı')
-                ->body('Grup bulunduğu araca artık bütün hâlinde sığmıyor. Bölünmemesi için yerleşmeyi bekleyenlere alındı; yeniden dağıtın.')
-                ->warning()->persistent()->actions([$board])->send();
+                ->body('Grup bulunduğu araca artık bütün hâlinde sığmıyor. Bölünmemesi için yerleşmeyi bekleyenlere alındı; yeniden dağıtılmalı.')
+                ->warning()->persistent()->actions($actions)->send();
 
             return;
         }
 
-        if (! $group->departure_vehicle_id && $departure->capacity > 0) {
+        if (! $group->departure_vehicle_id && $departure->capacity > 0 && $canAllocate) {
             Notification::make()
                 ->title('Grup henüz bir araca yerleşmedi')
                 ->body('Araç dağılımından "Bekleyenleri yerleştir" ile yerleştirebilirsiniz.')
-                ->info()->actions([$board])->send();
+                ->info()->actions($actions)->send();
         }
     }
 }

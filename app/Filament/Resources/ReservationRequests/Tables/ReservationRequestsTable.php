@@ -28,15 +28,14 @@ class ReservationRequestsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with(['tour', 'departure', 'district', 'province', 'assignee', 'group']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['departure', 'assignee', 'group']))
             ->columns([
                 TextColumn::make('created_at')->label('Tarih')->since()->dateTimeTooltip('d.m.Y H:i')->sortable(),
                 TextColumn::make('name')->label('Ad Soyad')->searchable()->weight('semibold'),
                 TextColumn::make('phone')->label('Telefon')->searchable()->copyable()->copyMessage('Kopyalandı'),
-                TextColumn::make('tour.title')->label('Tur')->placeholder('-')->limit(28)
+                TextColumn::make('departure.title')->label('Tur')->placeholder('Genel bilgi')->limit(28)
                     ->description(fn (ReservationRequest $record) => $record->departure?->starts_at?->format('d.m.Y')),
                 TextColumn::make('people_count')->label('Kişi')->badge()->color('info'),
-                TextColumn::make('location_label')->label('Bölge')->placeholder('-')->toggleable(),
                 TextColumn::make('assignee.name')->label('İlgilenen')
                     ->placeholder('atanmadı')
                     ->badge()
@@ -45,10 +44,10 @@ class ReservationRequestsTable
             ])
             ->filters([
                 SelectFilter::make('status')->label('Durum')->options(ReservationRequest::STATUSES),
-                SelectFilter::make('tour_id')->label('Tur')->relationship('tour', 'title')->preload(),
+                SelectFilter::make('tour_departure_id')->label('Tur')->relationship('departure', 'title')->preload(),
                 SelectFilter::make('assigned_to')
                     ->label('İlgilenen personel')
-                    ->options(fn () => User::query()->registrars()->active()->ordered()->pluck('name', 'id')),
+                    ->options(fn () => User::query()->active()->ordered()->pluck('name', 'id')),
                 Filter::make('unassigned')
                     ->label('Atanmamış talepler')
                     ->query(fn ($query) => $query->whereNull('assigned_to')),
@@ -70,7 +69,7 @@ class ReservationRequestsTable
                     ->schema([
                         Select::make('assigned_to')
                             ->label('Personel')
-                            ->options(fn () => User::query()->registrars()->active()->ordered()->get()
+                            ->options(fn () => User::query()->active()->ordered()->get()
                                 ->mapWithKeys(fn (User $u) => [
                                     $u->id => $u->name.' — '.$u->assignedRequests()
                                         ->whereIn('status', [ReservationRequest::STATUS_NEW, ReservationRequest::STATUS_CONTACTED])

@@ -17,8 +17,8 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Web sitesinden gelen rezervasyon talepleri. Talep koltuk TUTMAZ; personel müşteriyle
- * görüşüp "Gruba dönüştür" ile kayıt açar.
+ * Web sitesindeki iletişim formundan gelen talepler. Talep koltuk TUTMAZ; personel
+ * kişiyle görüşüp "Gruba dönüştür" ile kayıt açar.
  */
 class ReservationRequestResource extends Resource
 {
@@ -28,13 +28,13 @@ class ReservationRequestResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operasyon';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 8;
 
-    protected static ?string $modelLabel = 'Rezervasyon Talebi';
+    protected static ?string $modelLabel = 'İletişim Talebi';
 
-    protected static ?string $pluralModelLabel = 'Rezervasyon Talepleri';
+    protected static ?string $pluralModelLabel = 'İletişim Talepleri';
 
-    protected static ?string $slug = 'rezervasyon-talepleri';
+    protected static ?string $slug = 'iletisim-talepleri';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -60,7 +60,7 @@ class ReservationRequestResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        if (! (auth()->user()?->registersGroups() ?? false)) {
+        if (! (auth()->user()?->managesRequests() ?? false)) {
             return null;
         }
 

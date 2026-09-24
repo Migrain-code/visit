@@ -2,3 +2,72 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+/*
+ * Mobil alt sekme çubuğu (resources/views/filament/partials/mobile-tabs.blade.php).
+ * Telefonda içerik çubuğun altında kalmasın diye gövdeye boşluk bırakılır.
+ */
+.rg-tabs {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .rg-tabs {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 40;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 0;
+        padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
+        background: rgb(255 255 255 / 0.96);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgb(226 232 240);
+        box-shadow: 0 -8px 24px rgb(15 23 42 / 0.08);
+    }
+
+    .dark .rg-tabs {
+        background: rgb(15 23 42 / 0.94);
+        border-top-color: rgb(255 255 255 / 0.08);
+    }
+
+    .rg-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.4rem 0.25rem;
+        border-radius: 0.75rem;
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1;
+        color: rgb(100 116 139);
+        text-decoration: none;
+    }
+
+    .rg-tab-icon {
+        width: 1.45rem;
+        height: 1.45rem;
+    }
+
+    .rg-tab.is-active {
+        color: rgb(37 99 235);
+        background: rgb(37 99 235 / 0.08);
+    }
+
+    .dark .rg-tab.is-active {
+        color: rgb(147 197 253);
+        background: rgb(147 197 253 / 0.1);
+    }
+
+    .fi-layout {
+        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+
+    /* Telefonda tablolar sıkışmasın: sütunlar sığmıyorsa yatay kaydırılır, sayfa taşmaz. */
+    .fi-ta-content {
+        overflow-x: auto;
+    }
+}

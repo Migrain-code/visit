@@ -7,7 +7,9 @@ use App\Filament\Resources\TourDepartures\Pages\DepartureAllocation;
 use App\Filament\Resources\TourDepartures\Pages\EditTourDeparture;
 use App\Filament\Resources\TourDepartures\Pages\ListTourDepartures;
 use App\Filament\Resources\TourDepartures\Pages\ViewTourDeparture;
+use App\Filament\Resources\TourDepartures\RelationManagers\CommissionsRelationManager;
 use App\Filament\Resources\TourDepartures\RelationManagers\GroupsRelationManager;
+use App\Filament\Resources\TourDepartures\RelationManagers\LedgerRelationManager;
 use App\Filament\Resources\TourDepartures\RelationManagers\VehiclesRelationManager;
 use App\Filament\Resources\TourDepartures\Schemas\TourDepartureForm;
 use App\Filament\Resources\TourDepartures\Schemas\TourDepartureInfolist;
@@ -25,24 +27,26 @@ use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
- * Tur kayıtları (seferler): bir turun belirli bir tarihteki hâli.
- * Araçlar buraya atanır, gruplar buraya kaydedilir ve araçlara burada dağıtılır.
+ * Tüm Turlar: her tur tarihli tek bir gezidir. Araçlar buraya atanır, gruplar buraya
+ * kaydedilir ve araçlara burada dağıtılır; komisyon ve kasa hareketi de buraya bağlanır.
  */
 class TourDepartureResource extends Resource
 {
     protected static ?string $model = TourDeparture::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMap;
 
     protected static string|UnitEnum|null $navigationGroup = 'Operasyon';
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $modelLabel = 'Tur Kaydı';
+    protected static ?string $modelLabel = 'Tur';
 
-    protected static ?string $pluralModelLabel = 'Tur Kayıtları';
+    protected static ?string $pluralModelLabel = 'Tüm Turlar';
 
-    protected static ?string $slug = 'tur-kayitlari';
+    protected static ?string $navigationLabel = 'Tüm Turlar';
+
+    protected static ?string $slug = 'turlar';
 
     /** Özet / Araç Dağılımı / Düzenle sekmeleri üstte durur; pano tam genişlikte kalır. */
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -68,7 +72,7 @@ class TourDepartureResource extends Resource
     }
 
     /**
-     * Rehber yalnız kendi seferlerini görür.
+     * Yetkisiz hesap (rehber) yalnız kendi turlarını görür.
      *
      * İlke (TourDeparturePolicy) tek kayıt erişimini korur; bu kapsam listeyi korur.
      * İkisi birden gereklidir: yalnız listeyi filtrelemek, kayıt kimliğini bilen
@@ -76,10 +80,10 @@ class TourDepartureResource extends Resource
      */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->visibleTo(auth()->user())->withSeatStats()->with('tour');
+        return parent::getEloquentQuery()->visibleTo(auth()->user())->withSeatStats();
     }
 
-    /** Yaklaşan ve henüz araçlara yerleşmemiş yolcusu olan sefer sayısı. */
+    /** Yaklaşan ve henüz araçlara yerleşmemiş yolcusu olan tur sayısı. */
     public static function getNavigationBadge(): ?string
     {
         if (! (auth()->user()?->managesOperations() ?? false)) {
@@ -101,7 +105,7 @@ class TourDepartureResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        return 'Araçlara yerleşmemiş grubu olan yaklaşan sefer';
+        return 'Araçlara yerleşmemiş grubu olan yaklaşan tur';
     }
 
     public static function getRelations(): array
@@ -109,6 +113,8 @@ class TourDepartureResource extends Resource
         return [
             VehiclesRelationManager::class,
             GroupsRelationManager::class,
+            CommissionsRelationManager::class,
+            LedgerRelationManager::class,
         ];
     }
 

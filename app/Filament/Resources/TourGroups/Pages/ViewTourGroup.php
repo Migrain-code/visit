@@ -16,8 +16,8 @@ class ViewTourGroup extends ViewRecord
     {
         return [
             Action::make('departure')
-                ->label('Sefere git')
-                ->icon('heroicon-o-calendar-days')
+                ->label('Tura git')
+                ->icon('heroicon-o-map')
                 ->color('gray')
                 ->url(fn () => TourDepartureResource::getUrl('view', ['record' => $this->record->tour_departure_id])),
             EditAction::make(),

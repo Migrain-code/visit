@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
-use App\Models\Tour;
+use App\Models\TourDeparture;
 use App\Services\Media\ImageVariants;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -27,7 +27,7 @@ class PerformanceTest extends TestCase
     public function test_settings_are_read_once_per_request_not_once_per_call(): void
     {
         // Önbellek sürücüsü "database" iken her Cache::get bir sorgudur. setting() ana
-        // sayfada 104 kez çağrılıyordu ve her çağrı bir sorgu atıyordu.
+        // sayfada onlarca kez çağrılır; her çağrı bir sorgu atmamalı.
         config(['cache.default' => 'database']);
         Setting::flush();
 
@@ -54,49 +54,31 @@ class PerformanceTest extends TestCase
         $this->assertSame('Yeni başlık', setting('hero_title'));
     }
 
-    public function test_home_page_query_budget(): void
+    public function test_page_query_budgets(): void
     {
-        $count = 0;
-        DB::listen(function () use (&$count) {
-            $count++;
-        });
-
-        $this->get('/')->assertOk();
-
-        // Önlemden önce 144 sorguydu; tur sitesinde ~22. Sınır, yeni bir bölüm eklenmesine yer bırakır.
-        $this->assertLessThanOrEqual(30, $count, "Ana sayfa {$count} sorgu attı.");
-    }
-
-    public function test_listing_pages_query_budget(): void
-    {
-        // Tur kartları (kategori, en yakın tarih) ve takvim satırları (koltuk özeti) tek
-        // sorguda gelir; sayfa başına bütçe küçük kalmalı.
-        foreach (['/turlar' => 14, '/turlar/yayla-turlari' => 15, '/tur-takvimi' => 14, '/ayder-yaylasi-turu' => 20, '/rezervasyon' => 18, '/rize/ardesen' => 16] as $url => $budget) {
+        // Tur kartları koltuk özetiyle tek sorguda gelir; sayfa başına bütçe küçük kalmalı.
+        foreach (['/' => 8, '/iletisim' => 8, '/is-basvurusu' => 6] as $url => $budget) {
             $count = $this->countQueries($url);
 
             $this->assertLessThanOrEqual($budget, $count, "{$url} {$count} sorgu attı.");
         }
     }
 
-    public function test_query_count_does_not_grow_with_the_number_of_departures(): void
+    public function test_query_count_does_not_grow_with_the_number_of_tours(): void
     {
-        // N+1 koruması: sefer eklendikçe sorgu sayısı artıyorsa bir ilişki satır satır yükleniyordur.
-        $urls = ['/', '/turlar', '/tur-takvimi', '/ayder-yaylasi-turu', '/rezervasyon', '/rize/ardesen'];
-
+        // N+1 koruması: tur eklendikçe sorgu sayısı artıyorsa bir ilişki satır satır yükleniyordur.
         $this->get('/')->assertOk(); // ısınma: ayar önbelleği ilk istekte dolar
 
-        $before = collect($urls)->mapWithKeys(fn ($url) => [$url => $this->countQueries($url)]);
+        $before = ['/' => $this->countQueries('/'), '/iletisim' => $this->countQueries('/iletisim')];
 
-        foreach (Tour::all() as $tour) {
-            foreach ([100, 110, 120] as $days) {
-                $tour->departures()->create(['starts_at' => now()->addDays($days)->setTime(8, 0)]);
-            }
+        foreach ([100, 110, 120, 130] as $days) {
+            TourDeparture::create(['title' => 'Ek Tur '.$days, 'starts_at' => now()->addDays($days)->setTime(8, 0), 'price' => 1000]);
         }
 
-        foreach ($urls as $url) {
+        foreach ($before as $url => $count) {
             $after = $this->countQueries($url);
 
-            $this->assertLessThanOrEqual($before[$url], $after, "{$url}: sefer sayısı artınca sorgu sayısı {$before[$url]} → {$after} oldu.");
+            $this->assertLessThanOrEqual($count, $after, "{$url}: tur sayısı artınca sorgu sayısı {$count} → {$after} oldu.");
         }
     }
 
@@ -129,17 +111,16 @@ class PerformanceTest extends TestCase
 
     public function test_fonts_are_self_hosted(): void
     {
-        // Plus Jakarta Sans ve Fraunces paket içinden (@fontsource) derlenir; uzak @import yok.
+        // Plus Jakarta Sans paket içinden (@fontsource) derlenir; uzak @import yok.
         $scss = file_get_contents(resource_path('scss/app.scss'));
 
         $this->assertStringContainsString("@import '@fontsource/plus-jakarta-sans/", $scss);
-        $this->assertStringContainsString("@import '@fontsource/fraunces/", $scss);
 
         foreach (glob(resource_path('scss/*.scss')) as $file) {
             $this->assertDoesNotMatchRegularExpression('#fonts\.(googleapis|gstatic)\.com#', file_get_contents($file), basename($file).' uzak yazı tipi yüklüyor.');
         }
 
-        foreach (['/', '/ayder-yaylasi-turu', '/tur-takvimi'] as $url) {
+        foreach (['/', '/iletisim'] as $url) {
             $html = $this->get($url)->assertOk()->getContent();
 
             $this->assertStringNotContainsString('fonts.googleapis.com', $html);
@@ -151,10 +132,8 @@ class PerformanceTest extends TestCase
     {
         $html = $this->get('/')->assertOk()->getContent();
 
-        // Logo tek bir küçük SVG'dir; adı sabit olduğu için sürüm eki ile önbellek kırılır.
-        $this->assertMatchesRegularExpression('#images/brand/logo\.svg\?v=\d+"[^>]*width="\d+" height="\d+"#s', $html);
-        $this->assertStringContainsString('images/brand/logo-mark.svg', $html);
-        // Eski markanın dosyaları artık yok; sayfa onlara istek atmamalı.
+        // Marka işareti küçük bir SVG'dir; adı sabit olduğu için sürüm eki ile önbellek kırılır.
+        $this->assertMatchesRegularExpression('#images/brand/logo-mark\.svg\?v=\d+#', $html);
         $this->assertStringNotContainsString('logo-horizontal', $html);
 
         foreach (['logo.svg', 'logo-light.svg', 'logo-mark.svg'] as $file) {
@@ -165,22 +144,17 @@ class PerformanceTest extends TestCase
         }
     }
 
-    public function test_tour_cover_is_prioritised_and_card_images_are_lazy_with_dimensions(): void
+    public function test_tour_card_images_are_lazy_with_dimensions(): void
     {
-        $html = $this->get('/ayder-yaylasi-turu')->assertOk()->getContent();
+        $html = $this->get('/')->assertOk()->getContent();
+        preg_match_all('#<article class="tour-card[^"]*">.*?<img([^>]+)>#s', $html, $cards);
 
-        // Tur sayfasının en büyük öğesi kapak görselidir: öncelikli iner, boyutları bellidir (CLS).
-        $this->assertMatchesRegularExpression('#<img[^>]+width="1100" height="619" fetchpriority="high"#s', $html);
-
-        // Liste kartları ekran dışında başlar: tembel yüklenir ve yer tutar.
-        $html = $this->get('/turlar')->assertOk()->getContent();
-        preg_match_all('#<article class="tour-card">.*?<img([^>]+)>#s', $html, $cards);
-
-        $this->assertCount(9, $cards[1]);
+        $this->assertSame(TourDeparture::query()->bookable()->count(), count($cards[1]));
+        $this->assertGreaterThan(0, count($cards[1]));
 
         foreach ($cards[1] as $attributes) {
             $this->assertStringContainsString('loading="lazy"', $attributes);
-            $this->assertStringContainsString('width="640" height="427"', $attributes);
+            $this->assertStringContainsString('width="640" height="480"', $attributes);
             $this->assertStringNotContainsString('fetchpriority', $attributes);
         }
     }
@@ -261,7 +235,7 @@ class PerformanceTest extends TestCase
         // Cloudflare gizlediği her e-posta için kritik yola email-decode.min.js ekliyordu.
         Setting::set('email', 'info@ornek.test');
 
-        foreach (['/', '/iletisim', '/ayder-yaylasi-turu', '/rezervasyon'] as $url) {
+        foreach (['/', '/iletisim'] as $url) {
             $html = $this->get($url)->assertOk()->getContent();
 
             preg_match_all('/<a href="mailto:[^"]*">/', $html, $links);
@@ -295,7 +269,7 @@ class PerformanceTest extends TestCase
         $this->assertStringContainsString('api.js?render=${encodeURIComponent(cfg.siteKey)}', $js);
     }
 
-    /** Tek bir isteğin attığı sorgu sayısı. İstek başına tutulan veriler (menü, ayarlar) önce sıfırlanır. */
+    /** Tek bir isteğin attığı sorgu sayısı. İstek başına tutulan veriler (ayarlar) önce sıfırlanır. */
     private function countQueries(string $url): int
     {
         $this->app->forgetScopedInstances();

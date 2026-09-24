@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Setting;
-use App\Services\InternalLink\LinkApplier;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -80,35 +79,57 @@ if (! function_exists('whatsapp_number')) {
 
 if (! function_exists('whatsapp_message')) {
     /**
-     * Hazır WhatsApp mesajını oluşturur. {bolge} ve {tur} yer tutucuları desteklenir.
+     * Hazır WhatsApp mesajını oluşturur. {tur} yer tutucusu desteklenir.
      */
-    function whatsapp_message(?string $region = null, ?string $tour = null): string
+    function whatsapp_message(?string $tour = null): string
     {
         $template = (string) setting(
             'whatsapp_message',
             'Merhaba, {tur} hakkında bilgi almak istiyorum.'
         );
 
-        $message = str_replace(
-            ['{bolge}', '{tur}'],
-            [$region ?: '...', $tour ?: 'turlarınız'],
-            $template
-        );
-
-        if ($region && ! str_contains($template, '{bolge}')) {
-            $message .= ' Katılacağım bölge: '.$region;
-        }
-
-        return trim($message);
+        return trim(str_replace('{tur}', $tour ?: 'turlarınız', $template));
     }
 }
 
 if (! function_exists('whatsapp_url')) {
-    function whatsapp_url(?string $region = null, ?string $tour = null, ?string $rawMessage = null): string
+    function whatsapp_url(?string $tour = null, ?string $rawMessage = null): string
     {
-        $message = $rawMessage ?? whatsapp_message($region, $tour);
+        $message = $rawMessage ?? whatsapp_message($tour);
 
         return 'https://wa.me/'.whatsapp_number().'?text='.rawurlencode($message);
+    }
+}
+
+if (! function_exists('instagram_handle')) {
+    /** "@rteugeziyor" — ayarlardaki adresten ya da doğrudan girilen kullanıcı adından. */
+    function instagram_handle(): ?string
+    {
+        $handle = trim((string) setting('instagram_handle'));
+
+        if ($handle === '') {
+            $url = trim((string) setting('instagram_url'));
+            $handle = $url !== '' ? trim((string) parse_url($url, PHP_URL_PATH), '/') : '';
+        }
+
+        $handle = ltrim($handle, '@');
+
+        return $handle !== '' ? '@'.$handle : null;
+    }
+}
+
+if (! function_exists('instagram_url')) {
+    function instagram_url(): ?string
+    {
+        $url = trim((string) setting('instagram_url'));
+
+        if ($url !== '') {
+            return $url;
+        }
+
+        $handle = instagram_handle();
+
+        return $handle ? 'https://www.instagram.com/'.ltrim($handle, '@').'/' : null;
     }
 }
 
@@ -175,21 +196,9 @@ if (! function_exists('seo_title')) {
         $site = site_name();
 
         if (blank($title)) {
-            return (string) setting('meta_title', $site.' | Rize ve Trabzon Çıkışlı Günübirlik Turlar');
+            return (string) setting('meta_title', $site.' | '.setting('site_tagline', 'Keşfet · Tanış · Yaşa'));
         }
 
         return Str::contains($title, $site) ? $title : $title.' | '.$site;
-    }
-}
-
-if (! function_exists('internal_links')) {
-    /**
-     * İç link motorunu render anında uygular (spec §3.6).
-     *
-     * Motor kapalıysa HTML'e dokunulmaz. Tavanlar her istekte kontrol edilir.
-     */
-    function internal_links(?string $html, string $scope = 'blog', ?string $selfUrl = null): string
-    {
-        return app(LinkApplier::class)->apply($html, $scope, $selfUrl);
     }
 }

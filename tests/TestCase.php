@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;
 
@@ -35,5 +36,22 @@ abstract class TestCase extends BaseTestCase
                 'phpunit.xml ayarlarını kontrol edin ve "php artisan config:clear" çalıştırın.'
             );
         }
+    }
+
+    /**
+     * Aynı test içinde kullanıcı değiştirmek: panelin AuthenticateSession ara katmanı,
+     * oturumdaki parola özeti yeni kullanıcıyla uyuşmayınca oturumu kapatıp girişe
+     * yönlendirir (302). Kullanıcı değişince oturum sıfırlanır.
+     */
+    public function actingAs(UserContract $user, $guard = null)
+    {
+        $current = $this->app['auth']->guard($guard)->user();
+
+        if ($current && ! $current->is($user)) {
+            $this->app['auth']->forgetGuards();
+            $this->flushSession();
+        }
+
+        return parent::actingAs($user, $guard);
     }
 }

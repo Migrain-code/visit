@@ -2,10 +2,11 @@
 
 namespace App\Policies;
 
+use App\Models\DepartureVehicle;
 use App\Models\User;
 
 /**
- * Sefere atanan araçlar: yolcu verisini görebilen herkes görür, operasyon yönetir.
+ * Tura atanan araçlar: yolcu verisini görebilen herkes görür, araç atama yetkisi yönetir.
  */
 class DepartureVehiclePolicy
 {
@@ -14,9 +15,13 @@ class DepartureVehiclePolicy
         return $user->seesPassengers();
     }
 
-    public function view(User $user): bool
+    public function view(User $user, ?DepartureVehicle $vehicle = null): bool
     {
-        return $this->viewAny($user);
+        if ($user->seesPassengers()) {
+            return true;
+        }
+
+        return $vehicle?->departure !== null && $user->isGuideOf($vehicle->departure);
     }
 
     public function create(User $user): bool

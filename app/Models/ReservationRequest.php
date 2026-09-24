@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * Web sitesinden gelen rezervasyon talebi.
+ * Web sitesindeki iletişim formundan gelen talep ("İletişim Talepleri").
  *
- * Talep bir ÖN KAYITTIR: koltuk tutmaz. Personel müşteriyi arar, yolcu bilgilerini
+ * Talep bir ÖN KAYITTIR: koltuk tutmaz. Personel kişiyi arar, yolcu bilgilerini
  * alır ve talebi bir gruba dönüştürür; koltuğu tutan gruptur.
  */
 class ReservationRequest extends Model
@@ -38,7 +38,7 @@ class ReservationRequest extends Model
     ];
 
     protected $fillable = [
-        'name', 'phone', 'email', 'tour_id', 'tour_departure_id', 'province_id', 'district_id',
+        'name', 'phone', 'email', 'tour_departure_id',
         'people_count', 'preferred_date', 'message', 'kvkk_accepted', 'status', 'admin_notes',
         'source', 'page_url', 'ip', 'user_agent',
         'assigned_to', 'assigned_by', 'assigned_at', 'assignment_note',
@@ -54,24 +54,9 @@ class ReservationRequest extends Model
         ];
     }
 
-    public function tour(): BelongsTo
-    {
-        return $this->belongsTo(Tour::class);
-    }
-
     public function departure(): BelongsTo
     {
         return $this->belongsTo(TourDeparture::class, 'tour_departure_id');
-    }
-
-    public function province(): BelongsTo
-    {
-        return $this->belongsTo(Province::class);
-    }
-
-    public function district(): BelongsTo
-    {
-        return $this->belongsTo(District::class);
     }
 
     /** Talebi takip eden personel. */
@@ -113,8 +98,9 @@ class ReservationRequest extends Model
         return self::STATUSES[$this->status] ?? $this->status;
     }
 
-    public function getLocationLabelAttribute(): string
+    /** "Batum Turu · 12.04.2026" ya da "Genel bilgi" */
+    public function getTourLabelAttribute(): string
     {
-        return collect([$this->district?->name, $this->province?->name])->filter()->implode(' / ');
+        return $this->departure?->label ?? 'Genel bilgi';
     }
 }

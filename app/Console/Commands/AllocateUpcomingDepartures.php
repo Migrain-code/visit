@@ -9,20 +9,20 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Tur zamanı yaklaşan seferlerde araçsız kalan grupları kendiliğinden yerleştirir.
+ * Tur zamanı yaklaşan turlarda araçsız kalan grupları kendiliğinden yerleştirir.
  *
  * YALNIZ bekleyen gruplara dokunur: yerleşmiş ve elle sabitlenmiş gruplar yerinde
  * kalır. Yolculara araç bilgisi verildikten sonra gece çalışan bir görevin dağılımı
  * baştan karıştırması istenmez; "baştan dağıt" kararı panelde, insana aittir.
  *
  * Grup bölünmez: bütün hâlinde hiçbir araca sığmayan grup bekleyenlerde kalır ve
- * günlükte raporlanır; panel de o seferi uyarı rozetiyle gösterir.
+ * günlükte raporlanır; panel de o turi uyarı rozetiyle gösterir.
  */
 class AllocateUpcomingDepartures extends Command
 {
     protected $signature = 'tours:allocate-upcoming {--hours= : Kalkışa kaç saat kala (varsayılan: ayarlardaki değer, yoksa 48)}';
 
-    protected $description = 'Kalkışı yaklaşan seferlerde araçsız kalan grupları boş koltuklara yerleştirir (gruplar bölünmez)';
+    protected $description = 'Kalkışı yaklaşan turlarda araçsız kalan grupları boş koltuklara yerleştirir (gruplar bölünmez)';
 
     public function handle(DepartureAllocator $allocator): int
     {
@@ -40,13 +40,12 @@ class AllocateUpcomingDepartures extends Command
             ->whereNotIn('status', ['cancelled', 'completed'])
             ->whereHas('vehicles')
             ->whereHas('seatHoldingGroups', fn (Builder $q) => $q->whereNull('departure_vehicle_id')->where('passenger_count', '>', 0))
-            ->with('tour:id,title')
             ->orderBy('starts_at')
             ->get();
 
         if ($departures->isEmpty()) {
             AutomationLog::summary('tours.allocate', ['hours' => $hours], reasons: ['no_candidates']);
-            $this->info("Önümüzdeki {$hours} saatte yerleştirme bekleyen sefer yok.");
+            $this->info("Önümüzdeki {$hours} saatte yerleştirme bekleyen tur yok.");
 
             return self::SUCCESS;
         }
@@ -71,10 +70,10 @@ class AllocateUpcomingDepartures extends Command
             'groups_placed' => $placed,
         ], errors: $waiting === [] ? [] : ['Bölünmeden sığmayan gruplar var: '.implode(', ', $waiting)], changed: $placed > 0);
 
-        $this->info("{$departures->count()} sefer işlendi, {$placed} grup yerleştirildi.");
+        $this->info("{$departures->count()} tur işlendi, {$placed} grup yerleştirildi.");
 
         if ($waiting !== []) {
-            $this->warn('Araç eklenmesi gereken seferler: '.implode(', ', $waiting));
+            $this->warn('Araç eklenmesi gereken turlar: '.implode(', ', $waiting));
         }
 
         return self::SUCCESS;

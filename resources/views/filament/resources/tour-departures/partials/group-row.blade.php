@@ -7,7 +7,6 @@
     <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
             <a href="{{ $groupUrl($group) }}" class="font-medium text-gray-950 hover:underline dark:text-white">{{ $group->name ?: $group->contact_name }}</a>
-            <span class="text-xs text-gray-400">{{ $group->code }}</span>
             @if ($group->status === \App\Enums\GroupStatus::Pending)
                 <x-filament::badge color="warning" size="sm">Opsiyon</x-filament::badge>
             @endif

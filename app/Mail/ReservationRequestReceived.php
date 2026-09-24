@@ -17,10 +17,8 @@ class ReservationRequestReceived extends Mailable
 
     public function envelope(): Envelope
     {
-        $tour = $this->reservation->tour?->title ?? 'Genel talep';
-
         return new Envelope(
-            subject: 'Yeni rezervasyon talebi: '.$this->reservation->name.' · '.$tour.' ('.$this->reservation->people_count.' kişi)',
+            subject: 'Yeni iletişim talebi: '.$this->reservation->name.' · '.$this->reservation->tour_label.' ('.$this->reservation->people_count.' kişi)',
         );
     }
 
@@ -30,7 +28,7 @@ class ReservationRequestReceived extends Mailable
             view: 'emails.reservation-request',
             with: [
                 'reservation' => $this->reservation,
-                'adminUrl' => url('/admin/rezervasyon-talepleri/'.$this->reservation->getKey()),
+                'adminUrl' => url('/admin/iletisim-talepleri/'.$this->reservation->getKey()),
             ],
         );
     }

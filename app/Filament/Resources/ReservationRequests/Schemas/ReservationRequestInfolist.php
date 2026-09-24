@@ -14,19 +14,17 @@ class ReservationRequestInfolist
     {
         return $schema
             ->components([
-                Section::make('Müşteri')->schema([
+                Section::make('Kişi')->schema([
                     TextEntry::make('name')->label('Ad Soyad')->weight('semibold'),
                     TextEntry::make('phone')->label('Telefon')->copyable()->url(fn (ReservationRequest $record) => phone_href($record->phone)),
                     TextEntry::make('email')->label('E-posta')->placeholder('-')->copyable(),
-                    TextEntry::make('location_label')->label('Konakladığı bölge')->placeholder('-'),
                     TextEntry::make('people_count')->label('Kişi sayısı')->badge()->color('info'),
                     TextEntry::make('preferred_date')->label('Tercih edilen tarih')->date('d.m.Y')->placeholder('-'),
                 ])->columns(3)->columnSpanFull(),
 
                 Section::make('Talep')->schema([
-                    TextEntry::make('tour.title')->label('Tur')->placeholder('-'),
-                    TextEntry::make('departure.label')->label('Sefer')->placeholder('Sefer seçilmedi'),
-                    TextEntry::make('group.code')->label('Açılan grup kaydı')->placeholder('Henüz kayda dönüşmedi')->badge()
+                    TextEntry::make('tour_label')->label('Tur')->placeholder('Genel bilgi'),
+                    TextEntry::make('group.name')->label('Açılan grup kaydı')->placeholder('Henüz kayda dönüşmedi')->badge()
                         ->color(fn (?string $state) => $state ? 'success' : 'gray'),
                     TextEntry::make('message')->label('Mesaj')->placeholder('Mesaj yazılmamış.')->columnSpanFull(),
                 ])->columns(3)->columnSpanFull(),

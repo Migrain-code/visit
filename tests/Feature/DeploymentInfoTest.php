@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
 use App\Filament\Pages\SystemCommands;
 use App\Models\User;
 use App\Support\DeploymentInfo;
@@ -128,7 +127,7 @@ class DeploymentInfoTest extends TestCase
     {
         return User::create([
             'name' => 'Yönetici', 'email' => 'surum@test.test', 'password' => 'parola1234',
-            'role' => UserRole::SuperAdmin, 'is_active' => true,
+            'is_super_admin' => true, 'is_active' => true,
         ]);
     }
 }

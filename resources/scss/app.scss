@@ -1,13 +1,11 @@
 // Yazı tipleri KENDİ sunucumuzdan (Google Fonts değil). Google'ın CSS'i ayrı bir
-// alan adına bağlantı açıp sayfanın ilk çizimini bekletir (PageSpeed: ~750 ms).
-// Birleşik dosyalar unicode-range taşır: Türkçe karakterler (latin-ext) ayrı ve
-// yalnız gerektiğinde iner. Hepsi font-display: swap.
+// alan adına bağlantı açıp sayfanın ilk çizimini bekletir. Birleşik dosyalar
+// unicode-range taşır: Türkçe karakterler (latin-ext) ayrı ve yalnız gerektiğinde iner.
 @import '@fontsource/plus-jakarta-sans/400';
 @import '@fontsource/plus-jakarta-sans/500';
 @import '@fontsource/plus-jakarta-sans/600';
 @import '@fontsource/plus-jakarta-sans/700';
-@import '@fontsource/fraunces/600';
-@import '@fontsource/fraunces/700';
+@import '@fontsource/plus-jakarta-sans/800';
 
 @import 'variables';
 
@@ -27,14 +25,9 @@
 @import 'bootstrap/scss/forms';
 @import 'bootstrap/scss/buttons';
 @import 'bootstrap/scss/transitions';
-@import 'bootstrap/scss/dropdown';
-@import 'bootstrap/scss/nav';
-@import 'bootstrap/scss/navbar';
-@import 'bootstrap/scss/accordion';
-@import 'bootstrap/scss/breadcrumb';
 @import 'bootstrap/scss/alert';
 @import 'bootstrap/scss/close';
-@import 'bootstrap/scss/carousel';
+@import 'bootstrap/scss/modal';
 @import 'bootstrap/scss/offcanvas';
 @import 'bootstrap/scss/helpers';
 @import 'bootstrap/scss/utilities/api';

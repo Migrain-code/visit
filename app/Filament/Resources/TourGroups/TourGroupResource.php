@@ -19,8 +19,9 @@ use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
- * Gruplar: birlikte seyahat eden yolcular. Yolcu bilgileri (ad, soyad, TC, telefon,
- * yaş, cinsiyet) grubun içinde girilir. Grup araçlara BÖLÜNMEDEN yerleştirilir.
+ * Gruplar: "Yolcu Ekle" ekranında tek seferde girilen yolcu listesi.
+ * Yolcu bilgileri (ad, soyad, TC, telefon, biniş, cinsiyet) grubun içinde girilir.
+ * Grup araçlara BÖLÜNMEDEN yerleştirilir.
  */
 class TourGroupResource extends Resource
 {
@@ -30,7 +31,7 @@ class TourGroupResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operasyon';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $modelLabel = 'Grup';
 
@@ -53,7 +54,7 @@ class TourGroupResource extends Resource
         return TourGroupsTable::configure($table);
     }
 
-    /** Rehber yalnız kendi seferlerinin gruplarını görür (ilke tek kaydı, bu kapsam listeyi korur). */
+    /** Yetkisiz hesap (rehber) yalnız kendi turlarının gruplarını görür (ilke tek kaydı, bu kapsam listeyi korur). */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->visibleTo(auth()->user());

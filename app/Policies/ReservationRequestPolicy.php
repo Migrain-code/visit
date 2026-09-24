@@ -6,18 +6,18 @@ use App\Models\ReservationRequest;
 use App\Models\User;
 
 /**
- * Web sitesinden gelen rezervasyon talepleri: kayıt alabilen herkes görür ve işler.
+ * İletişim talepleri: "talepler" yetkisi olan görür ve işler; silme süper yöneticide.
  */
 class ReservationRequestPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->registersGroups();
+        return $user->managesRequests();
     }
 
     public function view(User $user, ReservationRequest $request): bool
     {
-        return $user->registersGroups();
+        return $user->managesRequests();
     }
 
     /** Talepler siteden gelir; panelden elle oluşturulmaz. */
@@ -28,7 +28,7 @@ class ReservationRequestPolicy
 
     public function update(User $user, ReservationRequest $request): bool
     {
-        return $user->registersGroups();
+        return $user->managesRequests();
     }
 
     public function delete(User $user, ReservationRequest $request): bool

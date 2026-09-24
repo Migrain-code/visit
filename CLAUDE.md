@@ -1,8 +1,8 @@
-# Visit Tur — devir notu (Claude için)
+# RTEÜ Geziyor — devir notu (Claude için)
 
-Bu dosya, projeye yeni bir Claude oturumunda devam edilsin diye yazıldı. Proje, `~/Desktop/montaj`
-(DOST MONTAJ, canlıda dostmontaj.com) projesinin altyapısı kopyalanıp **tur firmasına** dönüştürülerek
-kuruldu. Önceki sohbetin tamamı burada özetlidir; montaj sohbetine gerek yoktur.
+Bu dosya, projeye yeni bir Claude oturumunda devam edilsin diye yazıldı. Proje önce `~/Desktop/montaj`
+(DOST MONTAJ) altyapısından "Visit Tur" olarak kuruldu, sonra **kökten sadeleştirilip** üniversite öğrenci
+gezi topluluğu **RTEÜ Geziyor** için tek sayfalık site + mobil odaklı operasyon paneline dönüştürüldü.
 
 Kullanıcı Türkçe yazar, kısa ve gündelik mesajlar atar. İşi baştan sona devretmeyi sever ("bitince
 bana bildir"). Cevapları Türkçe ver.
@@ -11,175 +11,174 @@ bana bildir"). Cevapları Türkçe ver.
 
 ## Kesin kurallar (ihlal etme)
 
-- **Veritabanı paylaşımlı.** Yerel MySQL (`127.0.0.1`, `root`) kullanıcının başka projelerini de barındırır
-  (montaj'ın `trakya_mobilya_montaj`, `eyyopos`, `fitness`, `wedding`… gibi). Bu projenin veritabanı
-  **`visit_tur`**. Hiçbir koşulda `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `db:wipe`
-  çalıştırma. Yalnız `php artisan migrate` (eklemeli) ve idempotent seeder'lar.
+- **Veritabanı paylaşımlı.** Yerel MySQL (`127.0.0.1`, `root`) kullanıcının başka projelerini de barındırır.
+  Bu projenin veritabanı **`visit_tur`**. Hiçbir koşulda `migrate:fresh`, `migrate:refresh`, `migrate:reset`,
+  `db:wipe` çalıştırma. Yalnız `php artisan migrate` (eklemeli) ve idempotent seeder'lar.
 - **Testler yalnız bellek içi SQLite.** `tests/TestCase.php` bağlantı farklıysa testi durdurur.
-  Testleri `php vendor/bin/phpunit` ile çalıştır.
-- **Port 8000 kullanıcının montaj sunucusudur**, dokunma. Bu proje **8010**'da çalışır:
-  `php artisan serve --port=8010` (önceki oturumdan açık kalmış olabilir; `lsof -iTCP:8010`).
-- **`~/Desktop/montaj` ayrı ve canlı bir projedir**, bu projeden oraya yazma.
-- **Bölge yalnız Doğu Karadeniz (Rize + Trabzon).** Kullanıcı açıkça "Trakya bölgesinde işimiz yok"
-  dedi. Trakya / Tekirdağ / Kapadokya içeriği geri getirme.
+  `php vendor/bin/phpunit` ile çalıştır.
+- Yerel sunucu: **8010** (`php artisan serve --port=8010`); kullanıcı 8000'de de aynı projeyi açmış olabilir.
+- **`~/Desktop/montaj` ayrı ve canlı bir projedir**, oraya yazma.
 - Commit / push yalnız kullanıcı isteyince.
 
-## Proje nedir
+## Proje nedir (sadeleştirilmiş hâli)
 
-Rize ve Trabzon çıkışlı **günübirlik tur** firması için web sitesi + operasyon paneli.
+**Site (tek sayfa):** üst bar (RTEÜ **GEZİYOR** · "Keşfet · Tanış · Yaşa"), büyük hero kartı, "Haftalık Turlar"
+kart ızgarası (tıklanınca detay penceresi + "Katılmak İstiyorum" → iletişim formu), 4 maddelik öne çıkanlar şeridi,
+Instagram bandı. Ayrı sayfalar: `/iletisim` (form → panelde "İletişim Talepleri") ve `/is-basvurusu` (form +
+özgeçmiş → "İş Başvuruları"). Tur listesi, takvim, bölgeler, galeri, blog, SSS, hakkımızda **kaldırıldı** (kod ve
+testleriyle). SEO/AI modülü, iç link motoru, 404/yönlendirme gözlemi de kaldırıldı; eski tabloları DB'de duruyor
+(silinmedi), kod artık kullanmıyor.
 
-- **Site:** turlar, fiyatlar, tur takvimi, "{il/ilçe} çıkışlı günübirlik turlar" bölgesel SEO
-  sayfaları, blog, galeri, rezervasyon talep formu (koltuk ayırmaz, ön taleptir).
-- **Panel (`/admin`, Filament):** tur kayıtları (seferler), araç filosu, gruplar + yolcular
-  (ad, soyad, TC, telefon, yaş, cinsiyet), **grupları bölmeden araçlara dağıtma**, yazdırılabilir
-  yolcu listesi, rezervasyon talepleri, SEO & yapay zekâ modülü, Sistem Komutları.
+**Panel (`/admin`, Filament 5):** herkes telefondan kullanır → mobil alt sekme çubuğu
+(`resources/views/filament/partials/mobile-tabs.blade.php`) + PWA manifesti (`/admin/manifest.webmanifest`,
+"ana ekrana ekle"). Menü: Operasyon (Tüm Turlar, Yolcu Ekle, Gruplar, Yolcular, Araç Liste Sihirbazı, Araçlar,
+Araç Geçmişi, İletişim Talepleri, İş Başvuruları) · Personel (Personel, Kazançlarım) · Rapor (Kasa, Komisyon Raporu)
+· Ayarlar (Site Ayarları, Sistem Komutları). Pano = özet kartları + tek grafik.
+
+### Veri modeli — TUR = TARİHLİ TEK GEZİ
+
+Katalog/sefer ayrımı kaldırıldı. `App\Models\TourDeparture` (tablo `tour_departures`) artık **turun kendisidir**:
+`title, image, badge, short_description, description, starts_at, ends_on, price, meeting_point, sort_order, status,
+is_public, guide_id`. `tour_id` sütunu kaldı ama boş/kullanılmıyor (`tours` tablosu artık okunmaz). Sınıf adı
+geçmişten kalma; panelde/sitede adı "Tur". Ana sayfa sırası `sort_order` (Tüm Turlar tablosunda sürükle-bırak).
+
+**Yolcu Ekle** (`TourGroupResource` create): tur seç → yolcu kartlarını gir (ad, soyad, TC, telefon, nereden
+binecek, cinsiyet, yaş, not) → kaydet → bir **grup** olur. Ad boşsa `TourGroup::nextName()` "Grup 1, 2…" verir.
+İletişim kişisi/telefonu ve biniş özeti **ilk yolcudan/yolculardan türer** (`TourGroup::refreshPassengerCount`,
+`CreateTourGroup::mutateFormDataBeforeCreate`). `passengers.pickup_point` yolcu başına.
 
 ### Çekirdek kural: GRUP BÖLÜNMEZ
 
-Araç ataması **grupta** tutulur (`tour_groups.departure_vehicle_id`); yolcunun araç alanı yoktur.
-Bir grup ya tamamıyla tek araca biner ya da "yerleşmeyi bekleyenler"de kalır. Araç taşmaz.
-Dağıtım önceliği: (1) en çok yolcu, (2) en az araç, eşitlikte en az koltuk, (3) araçları liste
-sırasıyla doldur. Elle "Taşı" = o araca sabitle; "Baştan dağıt" sabitlenenlere dokunmaz.
-Grup büyürse / araç küçülür ya da silinirse gruplar araçtan çıkarılır (silinmez).
-Kalkışa 48 saat kala (`auto_allocate_hours` ayarı) `tours:allocate-upcoming` saat başı bekleyenleri yerleştirir.
+Araç ataması **grupta** (`tour_groups.departure_vehicle_id`). Dağıtım önceliği: (1) en çok yolcu, (2) **en az araç**
+(22 yolcu 26'lık tek araca sığıyorsa oraya gider), eşitlikte en az koltuk, (3) araçları liste sırasıyla doldur.
+Elle "Taşı" = sabitle; "Baştan dağıt" sabitlenenlere dokunmaz. Grup büyürse / araç küçülür ya da silinirse
+gruplar araçtan çıkarılır (silinmez). Kalkışa 48 saat kala (`auto_allocate_hours`) `tours:allocate-upcoming` saat başı.
 
-### Roller (`app/Enums/UserRole.php`, ilkeler `app/Policies`)
+**Araç Liste Sihirbazı** (`app/Filament/Pages/VehicleWizard.php`): tur seç → araç satırları (filodan seç → ad/koltuk/
+plaka/şoför dolar; ücret, rehber, not, görevli koltuğu) → "Araçları kaydet" (yerinde günceller; listeden çıkan araç
+turdan silinir, grupları bekleyenlere döner) → "Grupları yerleştir" (keepExisting: true). Özet kartlarında boş koltuk.
+`departure_vehicles.cost` (araç ücreti) ve `guide_id` (araç rehberi) buradan girilir. **Araç Geçmişi** =
+`VehicleHistoryResource` (departure_vehicles üzerinden salt okunur).
 
-| Rol | Yetki |
-| --- | --- |
-| `super_admin` | Her şey |
-| `operasyon` | Sefer, araç, dağıtım, tur/fiyat, talep atama |
-| `kayit` | Grup/yolcu kaydı, talepler; yalnız kendi girdiği grubu silebilir |
-| `icerik` | Site içeriği + SEO; **yolcu verisini göremez** |
-| `rehber` | Yalnız rehberi olduğu seferleri görür; değiştiremez |
+### Yetkiler (`app/Enums/Permission.php`) — rol yok, kişi başına kutu
 
-Yeni hesap varsayılanı `rehber` (en dar yetki).
+`users.is_super_admin` + `users.permissions` (json). Yetkiler: `tours.manage`, `vehicles.manage`,
+`allocation.manage`, `groups.create` (yalnız kendi girdiği grubu düzenler/siler), `groups.manage`, `requests.manage`
+(iletişim talepleri + iş başvuruları), `commissions.manage`, `reports.view`, `users.manage`, `settings.manage`.
+Yardımcılar `User` modelinde (`managesTours()`, `managesOperations()`, `registersGroups()`, `seesPassengers()`…).
+**Yetkisiz hesap = rehber:** yalnız rehberi olduğu turları (turun `guide_id`'si ya da bir aracının `guide_id`'si)
+ve kendi kazancını görür (`scopeVisibleTo`, `isGuideOf`). Eski `role` sütunu DB'de duruyor, kullanılmıyor.
+Yetki yöneticisi süper yöneticiyi düzenleyemez; kimse kendini silemez. Testte kullanıcı değiştirmek için
+`tests/TestCase::actingAs` oturumu sıfırlar (Filament AuthenticateSession 302 vermesin diye).
+
+### Komisyon ve kasa
+
+- `tour_commissions` (tur × personel benzersiz, `amount`): tur özetindeki **"Komisyon ekle"** eylemi
+  (`ViewTourDeparture::commissionAction`): "Tümüne uygula" + personel başına kutu; boş = silinir.
+- `Kazançlarım` (`MyEarnings`): herkes yalnız kendininkini görür. `Komisyon Raporu` (`CommissionReport`): toplam,
+  personele/tura göre, tarih/tur/personel filtreleri (`reports.view`).
+- `tour_ledger_entries` (income/expense): tur özetinde **"Kasa hareketi"** eylemi + ilişki yöneticisi.
+- **Kasa** (`CashReport`): Gelir = kayıtlı yolcu × `price` + ekstra gelir; Gider = araç ücretleri + komisyon + ekstra
+  gider; Kalan. Toplamlar `TourDeparture::scopeWithFinanceStats` alt sorgularıyla; filtre/sıralama için
+  `CashReport::NET_SQL` (SQLite takma adı ORDER BY/WHERE'de çözmez, `? + 0` metin bağlamayı sayıya çevirir).
 
 ## Çalıştırma
 
 ```bash
 cd ~/Desktop/visit
 php artisan serve --port=8010        # site: http://127.0.0.1:8010  panel: /admin
-npm run build                        # SCSS/JS değişince (public/build depoya dahil edilecek)
-php vendor/bin/phpunit               # 547 test, hepsi geçiyor (son durum)
+npm run build                        # SCSS/JS/panel teması değişince (public/build depoya dahil)
+php vendor/bin/phpunit               # 353 test, hepsi geçiyor (son durum)
 ```
 
-- **Yerel yönetici:** `admin@example.com` / `password` (Süper Yönetici). Canlıda zayıf parolayla
-  hesap oluşturulmaz (`AdminUserSeeder`).
-- Taze kurulumdan sonra panel JS için `php artisan filament:upgrade` gerekir; yoksa panelde
-  "filamentDropdown is not defined" hataları çıkar.
-- SEO verisini yenileme sırası: `seo:sync-targets` → `seo:catalog-keywords` → `seo:location-keywords` → `seo:discovery`.
-- Yerelde örnek içeriği baştan yüklemek gerekirse: YALNIZ `visit_tur` içindeki içerik tablolarını
-  boşaltıp `php artisan db:seed --force` (users tablosuna dokunma). Seeder'lar `firstOrCreate` ile çalışır.
+- **Yerel yönetici:** `admin@example.com` / `password` (süper yönetici). Canlıda zayıf parolayla hesap
+  oluşturulmaz (`AdminUserSeeder`).
+- Tohum: `AdminUserSeeder`, `ImageSeeder` (site/hero + tur görselleri), `SettingsSeeder` (RTEÜ Geziyor varsayılanları),
+  `VehicleSeeder`, `TourSeeder` (6 örnek tur, önümüzdeki hafta sonlarına tarihli; tur varsa dokunmaz),
+  `DemoOperationSeeder` (yalnız production değilken, ilk tura örnek gruplar).
+- Yerel `visit_tur`'da eski Visit Tur seferleri hâlâ duruyor (Ayder, Uzungöl…): başlık ve fiyatları tur kayıtlarına
+  kopyalandı. **1 numaralı tur (Ayder, 25.09.2026) örnek verilerle dolu:** 250 yolcu / 51 grup, 12 araç (plaka,
+  şoför, ücret, ilk ikisinde rehber), 4 personel (elif@/kerem@/zeynep@/burak@ornek.test, parola `parola1234`),
+  komisyonlar, kasa hareketleri, dağıtım yapılmış. Raporlar bu turla dolu görünür; kullanıcı isterse silinir.
 
 ## Teknik yığın
 
-Laravel 12.69 · PHP 8.2 · Filament 5.8 (Livewire) · MySQL · Vite 7 · Bootstrap 5 + SCSS (site) ·
-Tailwind 4 yalnız panel teması · Font Awesome 7 (ayrı `icons.scss`, engellemeyen yükleme) ·
-fontlar @fontsource ile yerel: **Plus Jakarta Sans** (gövde) + **Fraunces** (başlık).
-Saat dilimi `Europe/Istanbul` (`APP_TIMEZONE`). Cache/session/queue sürücüleri `database`.
+Laravel 12 · PHP 8.2 · Filament 5 (Livewire) · MySQL · Vite 7 · Bootstrap 5 (yalnız reboot/grid/forms/buttons/modal/
+offcanvas) + SCSS (site) · Tailwind 4 yalnız panel teması (`resources/css/filament/admin/theme.css`, alt sekme
+çubuğu stilleri burada) · Font Awesome 7 (`icons.scss`, engellemeyen yükleme) · font: Plus Jakarta Sans (@fontsource,
+800 ağırlığı başlıklar için). Saat dilimi `Europe/Istanbul`. Cache/session/queue `database`.
 
 ## Dosya haritası
 
 | Ne | Nerede |
 | --- | --- |
-| Dağıtım algoritması (saf, DB bilmez) | `app/Services/Allocation/VehicleAllocator.php` |
-| Dağıtımı kaydetme, elle taşıma, araç önerisi | `app/Services/Allocation/DepartureAllocator.php` |
-| Dağılım panosu | `app/Filament/Resources/TourDepartures/Pages/DepartureAllocation.php` + `resources/views/filament/resources/tour-departures/` |
-| Grup + yolcu formu, TC doğrulama | `app/Filament/Resources/TourGroups/`, `app/Rules/TcKimlikNo.php` |
-| Modeller | `Tour`, `TourCategory`, `TourDeparture`, `DepartureVehicle`, `Vehicle`, `TourGroup`, `Passenger`, `ReservationRequest` |
-| Operasyon göçü | `database/migrations/2026_09_22_000002_create_operation_tables.php` |
+| Tur (tarihli gezi) modeli, koltuk + kasa hesapları | `app/Models/TourDeparture.php` |
+| Tüm Turlar kaynağı (form/tablo/özet, komisyon & kasa eylemleri) | `app/Filament/Resources/TourDepartures/` |
+| Yolcu Ekle / gruplar | `app/Filament/Resources/TourGroups/` |
+| Araç Liste Sihirbazı | `app/Filament/Pages/VehicleWizard.php` + `resources/views/filament/pages/vehicle-wizard.blade.php` |
+| Araç Geçmişi | `app/Filament/Resources/VehicleHistory/` |
+| Kasa / Komisyon Raporu / Kazançlarım | `app/Filament/Pages/{CashReport,CommissionReport,MyEarnings}.php` |
+| Personel + yetkiler | `app/Filament/Resources/Users/UserResource.php`, `app/Enums/Permission.php`, `app/Policies/` |
+| İletişim talepleri / iş başvuruları | `app/Filament/Resources/{ReservationRequests,JobApplications}/` |
+| Dağıtım algoritması (saf) / kaydeden | `app/Services/Allocation/{VehicleAllocator,DepartureAllocator}.php` |
+| Dağılım panosu | `.../TourDepartures/Pages/DepartureAllocation.php` + `resources/views/filament/resources/tour-departures/` |
 | Yolcu listesi (manifesto) | `app/Http/Controllers/ManifestController.php`, `resources/views/admin/manifest.blade.php` |
-| Ön yüz denetleyicileri | `TourController`, `RegionController`, `ReservationController`, `HomeController` |
-| Tema (renkler) | `resources/scss/_variables.scss`, `resources/scss/_theme.scss` |
-| Örnek içerik | `database/seeders/data/tours.php`, `database/seeders/data/regions.php`, `SettingsSeeder`, `FaqSeeder` |
-| Örnek görseller + lisans kaynakları | `database/seeders/images/` + `CREDITS.md` (Wikimedia, CC0/kamu malı) |
-| Panel komut listesi (terminalsiz sunucu için) | `app/Support/Console/CommandCatalog.php` |
-| AI istemlerindeki firma tanımı | `app/Support/BusinessContext.php` (aktif illerden türetilir) |
-| SEO modülünün şartnamesi | `seo_sistemi_promptu.md` |
+| Site denetleyicileri | `HomeController`, `ContactController`, `JobApplicationController` |
+| Site görünümleri | `resources/views/{home,contact,job-application,thanks}.blade.php`, `partials/{header,mobile-nav,footer,tour-card,contact-form}` |
+| Tema (renkler: lacivert `#0d2544`, güneş sarısı `#ffc530`, gök mavisi `#0d7de0`) | `resources/scss/_variables.scss`, `_theme.scss` |
+| Marka | `public/images/brand/{logo,logo-light,logo-mark}.svg`, `icon-512.png`, `public/apple-touch-icon.png` (yer tutucu; Chrome ile SVG'den üretildi) |
+| Panel menü/PWA/alt bar | `app/Providers/Filament/AdminPanelProvider.php`, `resources/views/filament/partials/{pwa-head,mobile-tabs}.blade.php` |
+| Panel komut listesi | `app/Support/Console/CommandCatalog.php` (SEO komutları kaldırıldı) |
+| Site ayarları | `app/Filament/Pages/SiteSettings.php` (marka/iletişim/Instagram/logo, hero, tur bölümü, öne çıkanlar, operasyon, analitik) |
+| Göç: sadeleştirme + yetki + komisyon + kasa + iş başvurusu | `database/migrations/2026_09_23_000001_simplify_tours_and_add_finance.php` |
+| Örnek tur verisi | `database/seeders/data/tours.php` |
 | Kullanıcıya yönelik belge | `README.md` |
-
-## Mevcut içerik durumu
-
-- **9 tur** (hepsi TRY, fiyatlar ÖRNEK, bölgedeki gerçek programlara göre yazıldı):
-  Ayder Yaylası (1.400), Uzungöl (1.250), Sümela–Karaca Mağarası–Hamsiköy (1.350),
-  Günübirlik Batum (1.650), Pokut ve Sal Yaylası (1.750, eski 1.900), Huser Gün Batımı (1.650),
-  Zilkale ve Palovit Şelalesi (1.500), Trabzon Şehir Turu (1.100), Batum Tiflis 2 gece (9.800, eski 10.500).
-- **4 kategori:** Yayla Turları, Göl ve Vadi Turları, Kültür Turları, Batum ve Gürcistan Turları.
-- **Bölgeler:** Rize (12 ilçe) + Trabzon (18 ilçe). **Biniş noktaları bilerek boş** (kullanıcı girecek).
-- Site adı **"Visit Tur"** yer tutucudur; logo `public/images/brand/logo.svg` yer tutucu SVG.
-- **TÜRSAB no / ticari unvan boş** (Site Ayarları'nda alan var; doluysa footer'da görünür, yasal zorunluluk).
-- `DemoOperationSeeder` yalnız production DEĞİLKEN örnek seferler + kurgusal yolcular ekler.
-- Batum için araştırılan güncel bilgi sayfalara işlendi: T.C. vatandaşı çipli kimlikle geçer,
-  çocuk kimliğinde fotoğraf şart, 2026'dan beri girişte seyahat sağlık sigortası isteniyor.
 
 ## Kullanıcının tasarım tercihleri
 
-- **Canlı renkler.** İlk koyu petrol paletini "kötü" buldu. Şu an: gök mavisi `#0d7de0`, turuncu CTA
-  `#ff6a1f`, turkuaz `#12b5cb`, güneş sarısı `#ffc530`, geçişli butonlar ve bantlar, fotoğraf
-  katmanları hafif. Koyu/soluk tonlara dönme.
-- Başlıkta **yeşil oval "Ara" butonu** (ikonlu, telefon ikonu sallanır) + turuncu "Rezervasyon".
-- "Hata görmek istemiyorum": JS hatası, yatay taşma, kırık görsel bırakma. Mobilde kontrol et.
+- Referans: gönderdiği telefon mockup'ı (lacivert üst bar, sarı GEZİYOR, hero kartı, 2 sütun tur kartları,
+  sarı fiyat düğmesi, 4'lü şerit, Instagram bandı). "Hata görmek istemiyorum": JS hatası, yatay taşma, kırık görsel
+  bırakma; her değişiklikte telefon genişliğinde kontrol et (scratchpad'de puppeteer QA betiği kalıbı var:
+  `/, /iletisim, /is-basvurusu` + panel sayfaları, 390px ve 1440px).
+- Panel Filament varsayılan koyu/açık temada; telefonda alt sekme çubuğu şart.
 
-## Barındırma bağlamı (montaj'dan öğrenilenler, bu proje de aynı yere kurulacak)
+## Barındırma bağlamı (montaj'dan öğrenilenler)
 
-- cPanel + LiteSpeed + CloudLinux alt-php82 + Cloudflare. **Terminal yok.**
-- Dağıtım: cPanel **Git Version Control** → "Update from Remote" (GitHub). `vendor/` elle yüklenir.
-- Kapalı PHP fonksiyonları: `proc_open`, `pcntl_*`, `exec`, `symlink`, `escapeshellarg`, `highlight_file`. PHP 8'de kapalı
-  fonksiyon çağırmak `@` ile bastırılamayan Error fırlatır → `function_exists` ile koru.
-  `tests/Feature/SharedHostingCompatibilityTest.php` bunu sınar.
-- **Zamanlanmış görevler `InProcess::command()` ile eklenir, `Schedule::command()` ile DEĞİL**
-  (`routes/console.php`, `app/Support/Console/InProcess.php`). `Schedule::command()` her görevi ayrı
-  süreçte başlatır, bu da `proc_open` ister; hosting açmıyor. Montaj'da cron "DONE" yazıp hiçbir görevi
-  çalıştırmıyordu. `SystemCommandsTest::test_scheduled_tasks_run_inside_the_scheduler_process` yakalar.
-- "Önbellekleri oluştur" (`optimize`) taze bir uygulama başlatır; `CommandRunner::preserveApplicationState`
-  panel isteğinin container'ını ve Livewire kancalarını geri verir (yoksa sonraki tıklama
-  "Undefined array key children" ile düşer).
-- **Kuyruk işçisi `App\Support\Queue\SharedHostingWorker`** (`AppServiceProvider::register`'da
-  `extend('queue.worker')`). Hostingde pcntl eklentisi yüklü ama `pcntl_*` fonksiyonları kapalı; Laravel'in
-  işçisi yalnız eklentiye bakıp `pcntl_async_signals()` çağırdığı için montaj'da cron'daki `queue:work` her
-  dakika çöküyor, işler birikiyordu (panel: "Kuyruk işçisi çalışmıyor"). Bu işçi fonksiyonlara da bakar.
-- **"Update from Remote" → "could not contact the remote repository" çoğu zaman AĞ DEĞİLDİR.** cPanel,
-  sunucuda elle değiştirilmiş ya da elle yüklenmiş (git'teki yeni dosyayla aynı adlı) bir dosya birleştirmeyi
-  engellediğinde de bu mesajı verir. Montaj'da sebep elle yüklenen iki logoydu; hosting firması "bizde sorun
-  yok" dedi ve haklıydı. Git'teki dosyalar Dosya Yöneticisi ile elle yüklenmez/düzenlenmez; elle yalnız
-  `.env` (ve montaj'da `public/build`). Teşhis için montaj oturumunda salt okunur bir PHP betiği yazıldı:
-  `.git/index`'i okuyup çalışma ağacıyla karşılaştırır, kilit dosyalarına ve GitHub bağlantısına bakar
-  (betik saklanmadı; gerekirse aynı mantıkla yeniden yazılır).
-- MySQL için `DB_HOST=localhost` (soket). cPanel'in `AddHandler application/x-httpd-alt-php82`
-  satırı tüm .php dosyalarını 404 yaptı; eklenmemeli.
-- `storage:link` panelden olmazsa Sistem Komutları sayfası tek seferlik cron satırı verir.
-- Montaj'da yaşanan kaza: `public/build` yüklendi ama kod çekilmedi → ikonlar kayboldu, form bozuldu.
-  Bu yüzden bu projede **`public/build` ve `public/{js,css,fonts}/filament` `.gitignore`'dan çıkarıldı**
-  (depoya dahil). `public/llms*.txt` depoya girmez.
-- Cron: her dakika `schedule:run` ve kuyruk işçisi; satırları Sistem Komutları sayfası üretir.
+- cPanel + LiteSpeed + CloudLinux alt-php82 + Cloudflare. **Terminal yok.** Dağıtım: cPanel Git Version Control →
+  "Update from Remote". `vendor/` elle yüklenir. `public/build` ve `public/{js,css,fonts}/filament` depoya dahil.
+- Kapalı PHP fonksiyonları: `proc_open`, `pcntl_*`, `exec`, `symlink`, `escapeshellarg`, `highlight_file` →
+  `function_exists` ile koru (`SharedHostingCompatibilityTest`).
+- **Zamanlanmış görevler `InProcess::command()` ile** (`routes/console.php`); `Schedule::command()` proc_open
+  ister, hostingde hiç çalışmaz. Kuyruk işçisi `App\Support\Queue\SharedHostingWorker`.
+- "Önbellekleri oluştur" (`optimize`) taze uygulama başlatır; `CommandRunner::preserveApplicationState` panel
+  isteğinin container'ını geri verir. `.env` değişince panelden "Tüm önbellekleri temizle" → "Önbellekleri oluştur".
+- "Update from Remote → could not contact the remote repository" çoğu zaman sunucuda elle değiştirilmiş dosyadır.
+- MySQL için `DB_HOST=localhost`. cPanel `AddHandler application/x-httpd-alt-php82` satırı eklenmemeli.
+- İş başvurusu özgeçmişleri **özel diske** (`storage/app/private/job-applications`) yazılır; indirme
+  `admin.job-application.cv` rotası (yetki denetimli).
 
-## Açık işler (öncelik sırasıyla)
+## Açık işler
 
-1. ~~Git deposu yok.~~ Yapıldı: `https://github.com/Migrain-code/visit.git`, `main` gönderildi.
-2. **Canlıda ilk kurulum yolu yok:** panelde `db:seed` güvenlik için yasak (`CommandCatalog::FORBIDDEN`),
-   bu yüzden sunucuda ilk yönetici ve örnek içerik oluşturulamaz. Seçenekler: yerel `visit_tur`'u
-   phpMyAdmin'e aktarmak ya da yalnız `AdminUserSeeder` + içerik seeder'larını çalıştıran güvenli bir
-   kurulum komutunu kataloğa eklemek. Kullanıcıya sor.
-3. Gerçek fiyat/saatler, biniş noktaları, TÜRSAB no + unvan, logo, kendi fotoğrafları,
-   KVKK ve Tur Sözleşmesi metinleri (şablon), Batum sigortasının fiyata dahil olup olmadığı.
-4. Canlı `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, DB, `ADMIN_EMAIL/PASSWORD`,
-   `MAIL_*` (talep bildirimi için), isteğe bağlı `RECAPTCHA_*`, Google Analytics kimliği panelden.
-   `.env` değişince panelden sırasıyla "Tüm önbellekleri temizle" → "Önbellekleri oluştur" (yoksa eski
-   ayar önbellekte kalır; montaj'da `APP_DEBUG` bu yüzden canlıda açık kaldı).
-5. Alan adı belli olunca: `APP_URL`, `seo:discovery` (llms.txt alan adını içerir), Search Console.
+1. Git: depo `https://github.com/Migrain-code/visit.git` (`main`). Bu sadeleştirme henüz commit'lenmedi;
+   kullanıcı isteyince commit + push (Co-Authored-By satırıyla).
+2. Canlıda ilk kurulum yolu: panelde `db:seed` yasak. Seçenek: yerel `visit_tur`'u phpMyAdmin'e aktarmak ya da güvenli
+   bir kurulum komutu. Kullanıcıya sor.
+3. Gerçek içerik: logo, tur görselleri, fiyatlar, kalkış yeri, Instagram adresi, telefon/WhatsApp, KVKK metni.
+4. Canlı `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, DB, `ADMIN_EMAIL/PASSWORD`, `MAIL_*`
+   (talep/başvuru bildirimi), isteğe bağlı `RECAPTCHA_*`.
+5. Eski tablolar (`tours`, `tour_categories`, `provinces`, `districts`, blog/galeri/SEO) ve `users.role` sütunu
+   DB'de duruyor; istenirse ayrı bir göçle düşürülür.
 
 ## Bilinen tuzaklar
 
-- **Filament form doldurma:** forma değer vererek `fill()` yapmak alan varsayılanlarını devre dışı
-  bırakır → `CreateTourGroup::fillForm` ön doldurmaya `status`, `paid_amount`, boş yolcu satırını ekler.
-- Testte repeater satır anahtarları için `Repeater::fake()` kullanılıyor (`TourOperationsTest::setUp`).
-- `tour_groups.paid_amount` NOT NULL → boş bırakılırsa `TourGroup::saving` 0 yapar.
-- Grup sayısı yolcu satırlarından türetilir (`Passenger` saved/deleted → `refreshPassengerCount`);
-  test verisinde grup oluştururken gerçek yolcu satırı ekle.
-- Wikimedia Commons görselleri: yalnız standart küçük resim genişlikleri (1280, 1920) iner;
-  art arda istekte 429 döner, istekler arasında bekle. Yalnız CC0 / kamu malı kullan, `CREDITS.md`'yi güncelle.
-- Ekran görüntüsü: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --screenshot=… --window-size=1440,1100 URL`.
-  Panel sayfaları için oturum gerekir: geçici bir klasöre `puppeteer-core` kurup Chrome'u o yolla sür
-  (login formu: `input[type=email]`, `input[type=password]`, `button[type=submit]`).
-- Kök dizindeki slug'lar (tur, il, sayfa) çakışamaz; ayrılmış adresler `app/Rules/UniquePublicSlug.php` içinde.
+- **Filament form doldurma:** forma değer vererek `fill()` alan varsayılanlarını devre dışı bırakır →
+  `CreateTourGroup::fillForm` ön doldurmaya `status`, `paid_amount`, boş yolcu satırını ekler.
+- Repeater'lı testlerde `Repeater::fake()` (`TourOperationsTest`, `VehicleWizardTest`).
+- İlişkili repeater (yolcular) verisi `mutateFormDataBeforeCreate`'in `$data`'sına gelmez; ham `$this->data` okunur.
+- `tour_groups.contact_name/contact_phone` NOT NULL → `TourGroup::creating` geçici değer yazar, yolcu kaydedilince eşitlenir.
+- Grup sayısı yolcu satırlarından türer; test verisinde grup oluştururken gerçek yolcu satırı ekle.
+- RichEditor HTML'i normalize eder (`&#039;`, `<li><p>`): testte düz metin karşılaştır.
+- Widget'lar `$isLazy = false` (ilk HTML'de gelsin; testler de buna güvenir).
+- `TurkishText::upper()` kullan: `mb_strtoupper('Geziyor')` "GEZIYOR" verir.
+- Ekran görüntüsü: `puppeteer-core` (scratchpad) + Chrome; panel için login formu `input[type=email]`,
+  `input[type=password]`, `button[type=submit]`.

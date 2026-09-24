@@ -14,8 +14,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 /**
- * Seferin grupları. Kayıt ve düzenleme, yolcu satırlarıyla birlikte tam sayfa
- * "Gruplar" ekranında yapılır; burası özet listedir.
+ * Turun grupları. Kayıt ve düzenleme, yolcu satırlarıyla birlikte tam sayfa
+ * "Yolcu Ekle" ekranında yapılır; burası özet listedir.
  */
 class GroupsRelationManager extends RelationManager
 {
@@ -35,18 +35,18 @@ class GroupsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('contact_name')
-            ->modifyQueryUsing(fn ($query) => $query->with('vehicle'))
+            ->recordTitleAttribute('name')
+            ->modifyQueryUsing(fn ($query) => $query->with(['vehicle', 'passengers']))
             ->columns([
-                TextColumn::make('code')->label('Kod')->badge()->color('gray')->searchable(),
-                TextColumn::make('contact_name')->label('Grup / ilgili kişi')->searchable()->weight('semibold')
-                    ->formatStateUsing(fn (TourGroup $record) => $record->name ?: $record->contact_name)
-                    ->description(fn (TourGroup $record) => $record->contact_phone),
+                TextColumn::make('name')->label('Grup')->searchable(['name', 'contact_name', 'contact_phone'])->weight('semibold')
+                    ->description(fn (TourGroup $record) => $record->passengers->map(fn ($p) => $p->full_name)->implode(', ')),
                 TextColumn::make('passenger_count')->label('Kişi')->badge()->color('info')->sortable(),
+                TextColumn::make('contact_phone')->label('Telefon')->copyable(),
                 TextColumn::make('vehicle.name')->label('Araç')->placeholder('Yerleşmedi')->badge()
                     ->color(fn (?string $state) => $state ? 'success' : 'warning'),
                 IconColumn::make('is_pinned')->label('Sabit')->boolean()
-                    ->trueIcon('heroicon-m-lock-closed')->falseIcon('heroicon-m-minus')->falseColor('gray'),
+                    ->trueIcon('heroicon-m-lock-closed')->falseIcon('heroicon-m-minus')->falseColor('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('pickup_point')->label('Biniş')->placeholder('-')->toggleable(),
                 TextColumn::make('status')->label('Durum')->badge()
                     ->formatStateUsing(fn (GroupStatus $state) => $state->label())
@@ -58,7 +58,7 @@ class GroupsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Action::make('create')
-                    ->label('Grup kaydet')
+                    ->label('Yolcu ekle')
                     ->icon('heroicon-o-user-plus')
                     ->url(fn () => TourGroupResource::getUrl('create', ['departure' => $this->getOwnerRecord()->getKey()]))
                     ->visible(fn () => (auth()->user()?->can('create', TourGroup::class) ?? false) && $this->getOwnerRecord()->status->acceptsGroups()),
@@ -74,6 +74,6 @@ class GroupsRelationManager extends RelationManager
             ])
             ->recordUrl(fn (TourGroup $record) => TourGroupResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id')
-            ->emptyStateHeading('Bu sefere henüz grup kaydedilmedi');
+            ->emptyStateHeading('Bu tura henüz yolcu eklenmedi');
     }
 }

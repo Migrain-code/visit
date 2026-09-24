@@ -135,7 +135,7 @@ class WebpConversionTest extends TestCase
         Storage::fake('public');
         Storage::fake(FileUploadConfiguration::disk());
 
-        // Paneldeki TÜM görsel alanları (tur kapağı, galeri, kategori, blog, personel, site
+        // Paneldeki TÜM görsel alanları (tur kartı, personel, site
         // ayarları) bu yardımcıdan geçer; yüklenen dosya Livewire geçici dosyasıdır.
         $temporary = UploadedFile::fake()->image('Bozcaada Sahil.jpg', 2600, 1300)
             ->storeAs(FileUploadConfiguration::path(), 'gecici-yukleme.jpg', ['disk' => FileUploadConfiguration::disk()]);
@@ -157,18 +157,6 @@ class WebpConversionTest extends TestCase
         $this->assertSame([2200, 1100], [$w, $h]);
     }
 
-    public function test_tour_gallery_field_accepts_multiple_converted_images(): void
-    {
-        $gallery = FormHelpers::galleryUpload('gallery', 'tours/gallery', 'Tur galerisi');
-
-        $this->assertTrue($gallery->isMultiple());
-        $this->assertTrue($gallery->isReorderable());
-        $this->assertSame(20, $gallery->getMaxFiles());
-        $this->assertSame('public', $gallery->getDiskName());
-        $this->assertSame('tours/gallery', $gallery->getDirectory());
-        $this->assertEqualsCanonicalizing(['image/jpeg', 'image/png', 'image/webp', 'image/gif'], $gallery->getAcceptedFileTypes());
-    }
-
     public function test_reservation_form_does_not_accept_file_uploads(): void
     {
         Storage::fake('local');
@@ -176,13 +164,13 @@ class WebpConversionTest extends TestCase
 
         // Eski teklif formundaki fotoğraf alanı kaldırıldı: gönderilen dosya yok sayılır,
         // diske hiçbir şey yazılmaz ve talep yine de kaydedilir.
-        $this->post('/rezervasyon', [
+        $this->post('/iletisim', [
             'name' => 'Test',
             'phone' => '0532 111 22 33',
             'people_count' => 2,
             'kvkk' => '1',
             'photos' => [UploadedFile::fake()->image('telefon-fotografi.jpg', 3000, 2000)],
-        ])->assertRedirect(route('reservation.thanks'));
+        ])->assertRedirect(route('contact.thanks'));
 
         $reservation = ReservationRequest::firstOrFail();
 
@@ -190,6 +178,6 @@ class WebpConversionTest extends TestCase
         $this->assertSame([], Storage::disk('local')->allFiles());
         $this->assertSame([], Storage::disk('public')->allFiles());
 
-        $this->get('/rezervasyon')->assertOk()->assertDontSee('type="file"', false)->assertDontSee('multipart/form-data', false);
+        $this->get('/iletisim')->assertOk()->assertDontSee('type="file"', false)->assertDontSee('multipart/form-data', false);
     }
 }

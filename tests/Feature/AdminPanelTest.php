@@ -3,42 +3,29 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\SiteSettings;
-use App\Filament\Resources\Districts\Pages\EditDistrict;
-use App\Filament\Resources\Provinces\Pages\EditProvince;
-use App\Filament\Resources\TourCategories\Pages\EditTourCategory;
-use App\Filament\Resources\Tours\Pages\CreateTour;
-use App\Filament\Resources\Tours\Pages\EditTour;
-use App\Models\District;
-use App\Models\GalleryItem;
-use App\Models\Page;
-use App\Models\Province;
+use App\Filament\Resources\TourDepartures\Pages\CreateTourDeparture;
+use App\Filament\Resources\TourDepartures\Pages\EditTourDeparture;
+use App\Filament\Resources\TourDepartures\Pages\ListTourDepartures;
+use App\Models\JobApplication;
 use App\Models\ReservationRequest;
 use App\Models\Setting;
-use App\Models\Tour;
-use App\Models\TourCategory;
 use App\Models\TourDeparture;
 use App\Models\TourGroup;
-use App\Models\User;
 use Filament\Facades\Filament;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Tests\Concerns\CreatesStaff;
 use Tests\TestCase;
 
 class AdminPanelTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesStaff, RefreshDatabase;
 
     protected bool $seed = true;
 
-    private function admin(): User
-    {
-        return User::where('email', 'admin@example.com')->firstOrFail();
-    }
-
     public function test_guests_are_redirected_to_login(): void
     {
-        foreach (['/admin', '/admin/tours', '/admin/tur-kayitlari', '/admin/gruplar', '/admin/yolcular', '/admin/rezervasyon-talepleri', '/admin/site-settings'] as $url) {
+        foreach (['/admin', '/admin/turlar', '/admin/gruplar', '/admin/yolcular', '/admin/iletisim-talepleri', '/admin/kasa', '/admin/site-settings'] as $url) {
             $this->get($url)->assertRedirect('/admin/login');
         }
 
@@ -48,34 +35,28 @@ class AdminPanelTest extends TestCase
     public function test_all_admin_pages_render_for_admin(): void
     {
         $request = ReservationRequest::create(['name' => 'Test', 'phone' => '05321112233', 'people_count' => 3, 'kvkk_accepted' => true]);
+        JobApplication::create(['name' => 'Aday', 'phone' => '05321112233', 'position' => 'Rehber']);
         $departure = TourDeparture::query()->orderBy('starts_at')->firstOrFail();
         $group = TourGroup::query()->firstOrFail();
 
         $urls = [
             '/admin',
-            '/admin/site-settings',
-            // Operasyon
-            '/admin/tur-kayitlari', '/admin/tur-kayitlari/create',
-            '/admin/tur-kayitlari/'.$departure->id, '/admin/tur-kayitlari/'.$departure->id.'/edit',
-            '/admin/tur-kayitlari/'.$departure->id.'/arac-dagilimi',
+            '/admin/turlar', '/admin/turlar/create',
+            '/admin/turlar/'.$departure->id, '/admin/turlar/'.$departure->id.'/edit',
+            '/admin/turlar/'.$departure->id.'/arac-dagilimi',
             '/admin/gruplar', '/admin/gruplar/create', '/admin/gruplar/create?departure='.$departure->id,
             '/admin/gruplar/create?request='.$request->id,
             '/admin/gruplar/'.$group->id, '/admin/gruplar/'.$group->id.'/edit',
             '/admin/yolcular',
             '/admin/vehicles',
-            '/admin/rezervasyon-talepleri', '/admin/rezervasyon-talepleri/'.$request->id, '/admin/rezervasyon-talepleri/'.$request->id.'/edit',
-            // Katalog ve içerik
-            '/admin/tours', '/admin/tours/create', '/admin/tours/'.Tour::first()->id.'/edit',
-            '/admin/tour-categories', '/admin/tour-categories/create', '/admin/tour-categories/'.TourCategory::first()->id.'/edit',
-            '/admin/provinces', '/admin/provinces/create', '/admin/provinces/'.Province::first()->id.'/edit',
-            '/admin/districts', '/admin/districts/create', '/admin/districts/'.District::first()->id.'/edit',
-            '/admin/gallery-items', '/admin/gallery-items/create', '/admin/gallery-items/'.GalleryItem::first()->id.'/edit',
-            '/admin/gallery-categories',
-            '/admin/testimonials',
-            '/admin/faqs',
-            '/admin/features',
-            '/admin/pages', '/admin/pages/create', '/admin/pages/'.Page::first()->id.'/edit',
-            '/admin/users',
+            '/admin/arac-sihirbazi', '/admin/arac-sihirbazi?tour='.$departure->id,
+            '/admin/arac-gecmisi',
+            '/admin/iletisim-talepleri', '/admin/iletisim-talepleri/'.$request->id, '/admin/iletisim-talepleri/'.$request->id.'/edit',
+            '/admin/is-basvurulari',
+            '/admin/personel',
+            '/admin/kazanclarim',
+            '/admin/kasa', '/admin/komisyon-raporu',
+            '/admin/site-settings', '/admin/system-commands',
         ];
 
         $this->actingAs($this->admin());
@@ -86,6 +67,35 @@ class AdminPanelTest extends TestCase
         }
     }
 
+    public function test_removed_modules_are_gone_from_the_panel(): void
+    {
+        $this->actingAs($this->admin());
+
+        foreach (['/admin/tours', '/admin/tour-categories', '/admin/blogs', '/admin/gallery-items', '/admin/pages', '/admin/provinces',
+            '/admin/seo-dashboard', '/admin/seo-keywords', '/admin/analytics', '/admin/redirects', '/admin/not-found-logs', '/admin/rezervasyon-talepleri', '/admin/users'] as $url) {
+            $this->get($url)->assertNotFound();
+        }
+
+        $html = $this->get('/admin')->getContent();
+
+        foreach (['SEO & AI', 'Blog Yazıları', 'Galeri', 'Bölgeler', 'Gözlem', 'Sayfalar', 'Sık Sorulan Sorular'] as $label) {
+            $this->assertStringNotContainsString($label, $html, $label.' menüde kalmamalı');
+        }
+
+        foreach (['Tüm Turlar', 'Yolcu Ekle', 'Araç Liste Sihirbazı', 'Araç Geçmişi', 'İletişim Talepleri', 'İş Başvuruları', 'Personel', 'Kazançlarım', 'Kasa', 'Komisyon Raporu'] as $label) {
+            $this->assertStringContainsString($label, $html, $label.' menüde olmalı');
+        }
+    }
+
+    public function test_dashboard_has_only_stats_and_the_chart(): void
+    {
+        $html = $this->actingAs($this->admin())->get('/admin')->assertOk()->getContent();
+
+        $this->assertStringContainsString('Yaklaşan tur', $html);
+        $this->assertStringContainsString('Turlara göre yolcu', $html);
+        $this->assertStringNotContainsString('Son rezervasyon talepleri', $html);
+    }
+
     public function test_settings_page_saves_and_site_reflects_change(): void
     {
         $this->actingAs($this->admin());
@@ -93,129 +103,28 @@ class AdminPanelTest extends TestCase
 
         Livewire::test(SiteSettings::class)
             ->fillForm([
-                'site_name' => 'Deneme Turizm',
+                'site_name' => 'Deneme Geziyor',
+                'site_tagline' => 'Gez · Gör · Anlat',
                 'phone' => '+90 532 999 88 77',
                 'whatsapp' => '905329998877',
-                'hero_title' => 'Yeni Başlık Trakya Turları',
-                'tursab_no' => 'A-12345',
-                'company_title' => 'Deneme Turizm Seyahat Acentası Ltd. Şti.',
+                'instagram_handle' => 'denemegeziyor',
+                'hero_title' => 'Bu Ayın',
+                'hero_highlight' => 'Rotaları',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertSame('Deneme Turizm', Setting::where('key', 'site_name')->value('value'));
+        $this->assertSame('Deneme Geziyor', Setting::where('key', 'site_name')->value('value'));
 
         $this->get('/')
-            ->assertSee('Deneme Turizm')
+            ->assertSee('DENEME')
+            ->assertSee('GEZİYOR')
+            ->assertSee('Gez · Gör · Anlat')
             ->assertSee('tel:+905329998877', false)
             ->assertSee('https://wa.me/905329998877', false)
-            // Seyahat acentesi belge numarası alt bilgide görünmelidir (yasal zorunluluk).
-            ->assertSee('A-12345')
-            ->assertSee('Deneme Turizm Seyahat Acentası Ltd. Şti.');
-    }
-
-    public function test_tour_can_be_created_and_slug_collisions_are_blocked(): void
-    {
-        $this->actingAs($this->admin());
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-
-        Livewire::test(CreateTour::class)
-            ->fillForm([
-                'title' => 'Edirne Kültür Turu',
-                'slug' => 'edirne-kultur-turu',
-                'short_description' => 'Selimiye Camii ve Osmanlı başkenti Edirne.',
-                'duration_days' => 1,
-                'duration_nights' => 0,
-                'price' => 1500,
-                'currency' => 'TRY',
-                'highlights' => [['item' => 'Selimiye Camii'], ['item' => 'Meriç Köprüsü']],
-                'itinerary' => [['title' => 'Sabah: Selimiye', 'description' => 'Rehberli cami ve külliye gezisi.']],
-                'faqs' => [['question' => 'Yemek dahil mi?', 'answer' => 'Hayır, serbest zaman verilir.']],
-                'is_active' => true,
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
-
-        $created = Tour::where('slug', 'edirne-kultur-turu')->firstOrFail();
-        $this->assertSame(['Selimiye Camii', 'Meriç Köprüsü'], $created->highlights, 'basit liste düz dizi olarak saklanmalı');
-        $this->assertSame('Günübirlik', $created->duration_label);
-
-        $this->get('/edirne-kultur-turu')->assertOk()
-            ->assertSee('Selimiye Camii')
-            ->assertSee('Sabah: Selimiye')
-            ->assertSee('Yemek dahil mi?')
-            ->assertSee('1.500 ₺');
-
-        // Kök dizindeki adresler birbiriyle çakışamaz: "rize" bir ilin adresidir.
-        Livewire::test(CreateTour::class)
-            ->fillForm(['title' => 'Rize', 'slug' => 'rize', 'duration_days' => 1, 'duration_nights' => 0, 'currency' => 'TRY'])
-            ->call('create')
-            ->assertHasFormErrors(['slug']);
-
-        // Sabit rotalar da ayrılmıştır.
-        Livewire::test(CreateTour::class)
-            ->fillForm(['title' => 'Rezervasyon', 'slug' => 'rezervasyon', 'duration_days' => 1, 'duration_nights' => 0, 'currency' => 'TRY'])
-            ->call('create')
-            ->assertHasFormErrors(['slug']);
-    }
-
-    public function test_old_price_must_be_higher_than_price(): void
-    {
-        $this->actingAs($this->admin());
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-
-        Livewire::test(CreateTour::class)
-            ->fillForm([
-                'title' => 'İndirimsiz İndirim', 'slug' => 'indirimsiz-indirim',
-                'duration_days' => 1, 'duration_nights' => 0, 'currency' => 'TRY',
-                'price' => 2000, 'old_price' => 1500,
-            ])
-            ->call('create')
-            ->assertHasFormErrors(['old_price']);
-    }
-
-    public function test_seeded_records_can_be_saved_unchanged_from_the_panel(): void
-    {
-        $this->actingAs($this->admin());
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-
-        foreach (Tour::all() as $tour) {
-            Livewire::test(EditTour::class, ['record' => $tour->getKey()])
-                ->call('save')
-                ->assertHasNoFormErrors();
-
-            $fresh = $tour->fresh();
-            $this->assertSame($tour->highlights, $fresh->highlights, $tour->slug.': liste bozulmamalı');
-            $this->assertSame($tour->included, $fresh->included);
-            $this->assertSame($tour->itinerary, $fresh->itinerary);
-            $this->assertSame($tour->faqs, $fresh->faqs);
-            $this->assertSame($tour->image, $fresh->image);
-            $this->assertSame((string) $tour->price, (string) $fresh->price, $tour->slug.': fiyat değişmemeli');
-        }
-
-        foreach (TourCategory::all() as $category) {
-            Livewire::test(EditTourCategory::class, ['record' => $category->getKey()])
-                ->call('save')
-                ->assertHasNoFormErrors();
-
-            $this->assertSame($category->faqs, $category->fresh()->faqs);
-        }
-
-        foreach (Province::all() as $province) {
-            Livewire::test(EditProvince::class, ['record' => $province->getKey()])
-                ->call('save')
-                ->assertHasNoFormErrors();
-        }
-
-        foreach (District::all() as $district) {
-            Livewire::test(EditDistrict::class, ['record' => $district->getKey()])
-                ->call('save')
-                ->assertHasNoFormErrors();
-
-            $fresh = $district->fresh();
-            $this->assertSame($district->pickup_points, $fresh->pickup_points, $district->slug.': biniş noktaları bozulmamalı');
-            $this->assertSame($district->faqs, $fresh->faqs);
-        }
+            ->assertSee('@denemegeziyor')
+            ->assertSee('https://www.instagram.com/denemegeziyor/', false)
+            ->assertSee('Bu Ayın');
     }
 
     public function test_seeded_settings_can_be_saved_unchanged(): void
@@ -227,26 +136,89 @@ class AdminPanelTest extends TestCase
 
         Livewire::test(SiteSettings::class)->call('save')->assertHasNoFormErrors();
 
-        foreach (['hero_image', 'about_image', 'hero_title', 'whatsapp_message'] as $key) {
+        foreach (['hero_image', 'hero_title', 'whatsapp_message', 'site_name'] as $key) {
             $this->assertSame($before[$key], Setting::where('key', $key)->value('value'), $key.' değişmemeli');
         }
-
-        // Zengin metin editörü kesme işaretini &#039; olarak kodlar; tarayıcıda aynı görünür.
-        // İçeriğin kendisi (varlıklar çözüldükten sonra) birebir aynı kalmalıdır.
-        $this->assertSame(
-            $before['about_text'],
-            html_entity_decode(Setting::where('key', 'about_text')->value('value'), ENT_QUOTES | ENT_HTML5),
-            'about_text içeriği değişmemeli'
-        );
     }
 
-    public function test_tour_with_departures_cannot_be_deleted(): void
+    public function test_settings_pages_need_the_settings_permission(): void
     {
-        $tour = TourDeparture::query()->firstOrFail()->tour;
+        $this->actingAs($this->operations())->get('/admin/site-settings')->assertForbidden();
+        $this->actingAs($this->staff(['settings.manage']))->get('/admin/site-settings')->assertOk();
+    }
 
-        // Veritabanı da korur: yolcu kayıtları sefere, sefer tura bağlıdır.
-        $this->expectException(QueryException::class);
+    public function test_tour_can_be_created_from_the_panel_and_appears_on_the_site(): void
+    {
+        $this->actingAs($this->admin());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
 
-        $tour->delete();
+        Livewire::test(CreateTourDeparture::class)
+            ->fillForm([
+                'title' => 'Karadeniz Sahil Turu',
+                'badge' => 'Yeni',
+                'short_description' => 'Sahil boyunca bir gün.',
+                'starts_at' => now()->addDays(12)->setTime(9, 0)->format('Y-m-d H:i:s'),
+                'price' => 850,
+                'status' => 'open',
+                'is_public' => true,
+                'meeting_point' => 'Yerleşke önü',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $tour = TourDeparture::where('title', 'Karadeniz Sahil Turu')->firstOrFail();
+
+        $this->assertSame('KAR-'.now()->addDays(12)->format('dmy'), $tour->code);
+        $this->assertSame(now()->addDays(12)->toDateString(), $tour->ends_on->toDateString(), 'günübirlik: dönüş = kalkış günü');
+
+        $this->get('/')->assertOk()
+            ->assertSee('Karadeniz Sahil Turu')
+            ->assertSee('Sahil boyunca bir gün.')
+            ->assertSee('850 ₺')
+            ->assertSee('Yeni');
+    }
+
+    public function test_seeded_tours_can_be_saved_unchanged_from_the_panel(): void
+    {
+        $this->actingAs($this->admin());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        foreach (TourDeparture::all() as $tour) {
+            Livewire::test(EditTourDeparture::class, ['record' => $tour->getKey()])
+                ->call('save')
+                ->assertHasNoFormErrors();
+
+            $fresh = $tour->fresh();
+            $this->assertSame($tour->image, $fresh->image, $tour->title.': görsel değişmemeli');
+            $this->assertSame((string) $tour->price, (string) $fresh->price, $tour->title.': fiyat değişmemeli');
+            // Zengin metin editörü HTML'i yeniden biçimler (&#039;, <li><p>); metin birebir aynı kalmalı.
+            $plain = fn (?string $html) => preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode((string) $html, ENT_QUOTES | ENT_HTML5)));
+            $this->assertSame($plain($tour->description), $plain($fresh->description), $tour->title.': açıklama değişmemeli');
+        }
+    }
+
+    public function test_tours_table_hides_code_waiting_and_guide_columns(): void
+    {
+        $html = $this->actingAs($this->admin())->get('/admin/turlar')->assertOk()->getContent();
+
+        $this->assertStringContainsString('Boş koltuk', $html);
+        $this->assertStringNotContainsString('Yerleşmeyen', $html);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Livewire::test(ListTourDepartures::class)->assertTableFilterExists('dates')->assertTableFilterExists('upcoming');
+        $this->assertStringNotContainsString('>Kod<', $html);
+        $this->assertStringNotContainsString('>Rehber<', $html);
+    }
+
+    public function test_panel_carries_pwa_manifest_and_mobile_tabs(): void
+    {
+        $html = $this->actingAs($this->admin())->get('/admin')->assertOk()->getContent();
+
+        $this->assertStringContainsString('rel="manifest"', $html);
+        $this->assertStringContainsString('apple-mobile-web-app-capable', $html);
+        $this->assertStringContainsString('rg-tabs', $html);
+
+        $this->get('/admin/manifest.webmanifest')->assertOk()
+            ->assertJsonPath('display', 'standalone')
+            ->assertJsonPath('start_url', '/admin');
     }
 }

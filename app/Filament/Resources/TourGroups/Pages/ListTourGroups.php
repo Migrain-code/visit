@@ -13,7 +13,7 @@ class ListTourGroups extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Grup kaydet'),
+            CreateAction::make()->label('Yolcu ekle')->icon('heroicon-o-user-plus'),
         ];
     }
 }

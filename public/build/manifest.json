@@ -1,52 +1,4 @@
 {
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-600-normal.woff": {
-    "file": "assets/fraunces-latin-600-normal-DL5QCzvS.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-600-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-600-normal.woff2": {
-    "file": "assets/fraunces-latin-600-normal-BFCDtZfi.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-600-normal.woff2"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-700-normal.woff": {
-    "file": "assets/fraunces-latin-700-normal-DTjk5d1Q.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-700-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-700-normal.woff2": {
-    "file": "assets/fraunces-latin-700-normal-CEOla-zY.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-700-normal.woff2"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-600-normal.woff": {
-    "file": "assets/fraunces-latin-ext-600-normal-B0Dy4lqi.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-600-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-600-normal.woff2": {
-    "file": "assets/fraunces-latin-ext-600-normal-BtzmzP0X.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-600-normal.woff2"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-700-normal.woff": {
-    "file": "assets/fraunces-latin-ext-700-normal-DuBstVeD.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-700-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-700-normal.woff2": {
-    "file": "assets/fraunces-latin-ext-700-normal-CanUGppC.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-latin-ext-700-normal.woff2"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-600-normal.woff": {
-    "file": "assets/fraunces-vietnamese-600-normal-DlAl5EAR.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-600-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-600-normal.woff2": {
-    "file": "assets/fraunces-vietnamese-600-normal-BjlAJixd.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-600-normal.woff2"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-700-normal.woff": {
-    "file": "assets/fraunces-vietnamese-700-normal-DxawQjq2.woff",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-700-normal.woff"
-  },
-  "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-700-normal.woff2": {
-    "file": "assets/fraunces-vietnamese-700-normal-DH94m5DZ.woff2",
-    "src": "node_modules/@fontsource/fraunces/files/fraunces-vietnamese-700-normal.woff2"
-  },
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-400-normal.woff": {
     "file": "assets/plus-jakarta-sans-cyrillic-ext-400-normal-Dbdydbkh.woff",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-400-normal.woff"
@@ -78,6 +30,14 @@
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-700-normal.woff2": {
     "file": "assets/plus-jakarta-sans-cyrillic-ext-700-normal-iShZaXYX.woff2",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-700-normal.woff2"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-800-normal.woff": {
+    "file": "assets/plus-jakarta-sans-cyrillic-ext-800-normal-lQKgVBUR.woff",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-800-normal.woff"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-800-normal.woff2": {
+    "file": "assets/plus-jakarta-sans-cyrillic-ext-800-normal-DyqSzs2i.woff2",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-cyrillic-ext-800-normal.woff2"
   },
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff": {
     "file": "assets/plus-jakarta-sans-latin-400-normal-BDKaGhyp.woff",
@@ -111,6 +71,14 @@
     "file": "assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2"
   },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff": {
+    "file": "assets/plus-jakarta-sans-latin-800-normal-BRNHt2w0.woff",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2": {
+    "file": "assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2"
+  },
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-400-normal.woff": {
     "file": "assets/plus-jakarta-sans-latin-ext-400-normal-2ppkqaOR.woff",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-400-normal.woff"
@@ -142,6 +110,14 @@
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-700-normal.woff2": {
     "file": "assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-700-normal.woff2"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff": {
+    "file": "assets/plus-jakarta-sans-latin-ext-800-normal-BPkb-LBK.woff",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff2": {
+    "file": "assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff2"
   },
   "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-400-normal.woff": {
     "file": "assets/plus-jakarta-sans-vietnamese-400-normal-B8TCSmUq.woff",
@@ -175,6 +151,14 @@
     "file": "assets/plus-jakarta-sans-vietnamese-700-normal-CV6qDkkj.woff2",
     "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-700-normal.woff2"
   },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-800-normal.woff": {
+    "file": "assets/plus-jakarta-sans-vietnamese-800-normal-BkoGl_sr.woff",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-800-normal.woff"
+  },
+  "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-800-normal.woff2": {
+    "file": "assets/plus-jakarta-sans-vietnamese-800-normal-CxbopLd3.woff2",
+    "src": "node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-800-normal.woff2"
+  },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
     "file": "assets/fa-brands-400-Bs6tcqqs.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2"
@@ -188,7 +172,7 @@
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"
   },
   "resources/css/filament/admin/theme.css": {
-    "file": "assets/theme-9XsPwKdW.css",
+    "file": "assets/theme-DyMfmc5Z.css",
     "src": "resources/css/filament/admin/theme.css",
     "isEntry": true,
     "name": "theme",
@@ -197,13 +181,13 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CbtxFv15.js",
+    "file": "assets/app-DQIPWEK5.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-BzlrtYpX.css",
+    "file": "assets/app-Bw-jgak9.css",
     "src": "resources/scss/app.scss",
     "isEntry": true,
     "name": "app",

@@ -11,21 +11,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
- * Tur kaydı (sefer): bir turun belirli bir tarihte yapılan hâli.
+ * TUR: belirli bir tarihte yapılan tek gezi ("Batum · 12 Nisan · 1.250 TL").
  *
- * Araçlar ve gruplar buna bağlanır. "Ayder Yaylası Turu" katalogda tek kayıttır;
- * 25 Eylül ve 9 Ekim seferleri iki ayrı TourDeparture'dır.
+ * Katalog/sefer ayrımı kaldırıldı: aynı rotanın ikinci tarihi ayrı bir kayıttır.
+ * Araçlar, gruplar, komisyonlar ve kasa hareketleri buna bağlanır. Sınıf adı
+ * geçmişten kalır (tablo: tour_departures); panelde ve sitede adı "Tur"dur.
  */
 class TourDeparture extends Model
 {
     protected $fillable = [
-        'tour_id', 'code', 'starts_at', 'ends_on', 'meeting_point', 'price', 'quota',
-        'guide_id', 'status', 'is_public', 'notes', 'allocated_at', 'created_by',
+        'title', 'image', 'image_alt', 'badge', 'short_description', 'description',
+        'code', 'starts_at', 'ends_on', 'meeting_point', 'price', 'quota',
+        'guide_id', 'status', 'is_public', 'sort_order', 'notes', 'allocated_at', 'created_by',
     ];
 
     protected $attributes = [
         'status' => 'open',
         'is_public' => true,
+        'sort_order' => 0,
     ];
 
     protected function casts(): array
@@ -35,6 +38,7 @@ class TourDeparture extends Model
             'ends_on' => 'date',
             'price' => 'decimal:2',
             'quota' => 'integer',
+            'sort_order' => 'integer',
             'status' => DepartureStatus::class,
             'is_public' => 'boolean',
             'allocated_at' => 'datetime',
@@ -54,19 +58,19 @@ class TourDeparture extends Model
         });
 
         static::saving(function (self $departure) {
-            // Bitiş tarihi girilmediyse turun süresinden hesaplanır.
-            if (blank($departure->ends_on) && $departure->starts_at && $departure->tour) {
-                $departure->ends_on = $departure->starts_at->copy()->startOfDay()
-                    ->addDays(max(1, (int) $departure->tour->duration_days) - 1);
+            $departure->title = trim((string) $departure->title);
+
+            // Dönüş tarihi girilmediyse günübirliktir.
+            if (blank($departure->ends_on) && $departure->starts_at) {
+                $departure->ends_on = $departure->starts_at->copy()->startOfDay();
             }
         });
     }
 
-    /** "KAP-250926", çakışırsa "KAP-250926-2". */
+    /** "BAT-120426", çakışırsa "BAT-120426-2". Yalnız iç kullanım (yolcu listesi başlığı). */
     public static function generateCode(self $departure): string
     {
-        $tour = $departure->tour ?? Tour::find($departure->tour_id);
-        $prefix = Str::upper(Str::substr(Str::slug((string) $tour?->title, ''), 0, 3)) ?: 'TUR';
+        $prefix = Str::upper(Str::substr(Str::slug((string) $departure->title, ''), 0, 3)) ?: 'TUR';
         $base = $prefix.'-'.($departure->starts_at?->format('dmy') ?? now()->format('dmy'));
         $code = $base;
         $suffix = 2;
@@ -79,11 +83,6 @@ class TourDeparture extends Model
     }
 
     // ---------- İlişkiler ----------
-
-    public function tour(): BelongsTo
-    {
-        return $this->belongsTo(Tour::class);
-    }
 
     public function vehicles(): HasMany
     {
@@ -101,6 +100,16 @@ class TourDeparture extends Model
         return $this->groups()->where('status', '!=', GroupStatus::Cancelled->value);
     }
 
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(TourCommission::class);
+    }
+
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(TourLedgerEntry::class)->orderBy('entry_date')->orderBy('id');
+    }
+
     public function guide(): BelongsTo
     {
         return $this->belongsTo(User::class, 'guide_id');
@@ -113,11 +122,16 @@ class TourDeparture extends Model
 
     // ---------- Kapsamlar ----------
 
-    /** Rehber yalnız kendi seferlerini görür. */
+    /**
+     * Yetkisi olmayan hesap (rehber) yalnız rehberi olduğu turları görür: turun
+     * kendisinde ya da araçlarından birinde rehber olarak yazılıysa.
+     */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user && $user->isGuide()) {
-            return $query->where('guide_id', $user->getKey());
+        if ($user && $user->isGuideOnly()) {
+            return $query->where(fn (Builder $q) => $q
+                ->where('guide_id', $user->getKey())
+                ->orWhereHas('vehicles', fn (Builder $v) => $v->where('guide_id', $user->getKey())));
         }
 
         return $query;
@@ -128,7 +142,7 @@ class TourDeparture extends Model
         return $query->where('starts_at', '>=', now()->startOfDay());
     }
 
-    /** Web sitesinde satışa açık seferler. */
+    /** Web sitesinde gösterilen turlar. */
     public function scopeBookable(Builder $query): Builder
     {
         return $query
@@ -137,10 +151,13 @@ class TourDeparture extends Model
             ->where('starts_at', '>', now());
     }
 
-    /**
-     * Liste ekranları için koltuk özetini TEK sorguda getirir (sefer başına iki ek
-     * sorgu yerine alt sorgular).
-     */
+    /** Ana sayfadaki sıra: panelden sürüklenen sıra, eşitse tarih. */
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query->orderBy('sort_order')->orderBy('starts_at');
+    }
+
+    /** Liste ekranları için koltuk özetini TEK sorguda getirir. */
     public function scopeWithSeatStats(Builder $query): Builder
     {
         return $query->addSelect([
@@ -156,6 +173,27 @@ class TourDeparture extends Model
                 ->whereColumn('tour_departure_id', 'tour_departures.id')
                 ->where('status', '!=', GroupStatus::Cancelled->value)
                 ->whereNull('departure_vehicle_id'),
+        ]);
+    }
+
+    /** Kasa için toplamlar: araç ücreti, komisyon, ekstra gelir/gider — tek sorguda. */
+    public function scopeWithFinanceStats(Builder $query): Builder
+    {
+        return $query->withSeatStats()->addSelect([
+            'vehicle_cost_sum' => DepartureVehicle::query()
+                ->selectRaw('coalesce(sum(cost), 0)')
+                ->whereColumn('tour_departure_id', 'tour_departures.id'),
+            'commission_sum' => TourCommission::query()
+                ->selectRaw('coalesce(sum(amount), 0)')
+                ->whereColumn('tour_departure_id', 'tour_departures.id'),
+            'extra_income_sum' => TourLedgerEntry::query()
+                ->selectRaw('coalesce(sum(amount), 0)')
+                ->whereColumn('tour_departure_id', 'tour_departures.id')
+                ->where('type', TourLedgerEntry::TYPE_INCOME),
+            'extra_expense_sum' => TourLedgerEntry::query()
+                ->selectRaw('coalesce(sum(amount), 0)')
+                ->whereColumn('tour_departure_id', 'tour_departures.id')
+                ->where('type', TourLedgerEntry::TYPE_EXPENSE),
         ]);
     }
 
@@ -196,6 +234,12 @@ class TourDeparture extends Model
         return $this->sale_limit === null ? null : max(0, $this->sale_limit - $this->seats_taken);
     }
 
+    /** Araçlardaki boş koltuk (kontenjandan bağımsız). Araç yoksa null. */
+    public function getEmptySeatsAttribute(): ?int
+    {
+        return $this->capacity > 0 ? max(0, $this->capacity - $this->seats_taken) : null;
+    }
+
     public function getIsFullAttribute(): bool
     {
         return $this->seats_left === 0;
@@ -211,29 +255,87 @@ class TourDeparture extends Model
         return (int) $this->seatHoldingGroups()->whereNull('departure_vehicle_id')->sum('passenger_count');
     }
 
+    // ---------- Kasa ----------
+
+    private function financeSum(string $key, callable $fallback): float
+    {
+        return array_key_exists($key, $this->attributes)
+            ? (float) $this->attributes[$key]
+            : (float) $fallback();
+    }
+
+    public function getVehicleCostAttribute(): float
+    {
+        return $this->financeSum('vehicle_cost_sum', fn () => $this->vehicles()->sum('cost'));
+    }
+
+    public function getCommissionTotalAttribute(): float
+    {
+        return $this->financeSum('commission_sum', fn () => $this->commissions()->sum('amount'));
+    }
+
+    public function getExtraIncomeAttribute(): float
+    {
+        return $this->financeSum('extra_income_sum', fn () => $this->ledgerEntries()->where('type', TourLedgerEntry::TYPE_INCOME)->sum('amount'));
+    }
+
+    public function getExtraExpenseAttribute(): float
+    {
+        return $this->financeSum('extra_expense_sum', fn () => $this->ledgerEntries()->where('type', TourLedgerEntry::TYPE_EXPENSE)->sum('amount'));
+    }
+
+    /** Yolcu geliri: kayıtlı yolcu × kişi başı fiyat. */
+    public function getPassengerRevenueAttribute(): float
+    {
+        return $this->seats_taken * (float) ($this->price ?? 0);
+    }
+
+    public function getTotalIncomeAttribute(): float
+    {
+        return $this->passenger_revenue + $this->extra_income;
+    }
+
+    public function getTotalExpenseAttribute(): float
+    {
+        return $this->vehicle_cost + $this->commission_total + $this->extra_expense;
+    }
+
+    /** Turdan kasaya kalan. */
+    public function getNetAttribute(): float
+    {
+        return $this->total_income - $this->total_expense;
+    }
+
     // ---------- Görünüm yardımcıları ----------
 
     public function getEffectivePriceAttribute(): ?float
     {
-        $price = $this->price ?? $this->tour?->price;
-
-        return $price !== null ? (float) $price : null;
+        return $this->price !== null ? (float) $this->price : null;
     }
 
     public function getPriceLabelAttribute(): ?string
     {
-        return $this->effective_price !== null
-            ? money_label($this->effective_price, $this->tour?->currency ?? 'TRY')
-            : null;
+        return $this->effective_price !== null ? money_label($this->effective_price) : null;
     }
 
-    /** "Ayder Yaylası Turu · 25.09.2026" */
+    public function getImageUrlAttribute(): string
+    {
+        return media_url($this->image, asset('images/placeholder.svg'));
+    }
+
+    /** "Batum Turu · 12.04.2026" */
     public function getLabelAttribute(): string
     {
-        return trim(($this->tour?->title ?? 'Tur').' · '.$this->starts_at?->format('d.m.Y'));
+        return trim(($this->title ?: 'Tur').' · '.$this->starts_at?->format('d.m.Y'));
     }
 
-    /** "25 Eylül 2026 Cuma" */
+    /** "12 Nisan Cts" — sitedeki kart. */
+    public function getShortDateLabelAttribute(): string
+    {
+        return (string) $this->starts_at?->translatedFormat('j F D');
+    }
+
+    /** "12 Nisan 2026 Cumartesi" */
     public function getDateLabelAttribute(): string
     {
         return (string) $this->starts_at?->translatedFormat('j F Y l');
@@ -252,5 +354,10 @@ class TourDeparture extends Model
         return $this->starts_at->isSameMonth($this->ends_on)
             ? $this->starts_at->format('j').' - '.$this->ends_on->translatedFormat('j F Y')
             : $this->starts_at->translatedFormat('j F').' - '.$this->ends_on->translatedFormat('j F Y');
+    }
+
+    public function getIsPastAttribute(): bool
+    {
+        return $this->starts_at !== null && $this->starts_at->isPast();
     }
 }

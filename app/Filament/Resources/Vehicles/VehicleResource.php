@@ -22,7 +22,7 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Hazır araç listesi. Koltuk sayıları burada tanımlanır; seferlere buradan araç seçilir.
+ * Hazır araç listesi (filo). Koltuk sayıları burada tanımlanır; turlara buradan araç seçilir.
  */
 class VehicleResource extends Resource
 {
@@ -32,7 +32,7 @@ class VehicleResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operasyon';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $modelLabel = 'Araç';
 
@@ -48,7 +48,7 @@ class VehicleResource extends Resource
                 ->required()
                 ->maxLength(100)
                 ->placeholder('19 Koltuklu Sprinter')
-                ->helperText('Sefere araç atarken bu adla görünür.'),
+                ->helperText('Tura araç atarken bu adla görünür.'),
             TextInput::make('seat_count')
                 ->label('Yolcu koltuğu sayısı')
                 ->required()
@@ -62,7 +62,7 @@ class VehicleResource extends Resource
             TextInput::make('sort_order')->label('Sıra')->numeric()->default(0),
             Textarea::make('notes')->label('Notlar')->rows(2)->columnSpanFull(),
             Toggle::make('is_active')->label('Kullanımda')->default(true)
-                ->helperText('Kapatılan araç yeni seferlerde seçilemez; geçmiş seferler etkilenmez.'),
+                ->helperText('Kapatılan araç yeni turlarda seçilemez; geçmiş turlar etkilenmez.'),
         ]);
     }
 
@@ -76,10 +76,10 @@ class VehicleResource extends Resource
                     ->formatStateUsing(fn (int $state) => $state.' koltuk'),
                 TextColumn::make('driver_name')->label('Şoför')->placeholder('-')
                     ->description(fn (Vehicle $record) => $record->driver_phone),
-                TextColumn::make('assignments_count')->label('Sefer')->counts('assignments')->sortable()
-                    ->tooltip('Bu aracın atandığı sefer sayısı'),
+                TextColumn::make('assignments_count')->label('Tur')->counts('assignments')->sortable()
+                    ->tooltip('Bu aracın atandığı tur sayısı'),
                 ToggleColumn::make('is_active')->label('Kullanımda')
-                    ->disabled(fn () => ! (auth()->user()?->managesOperations() ?? false)),
+                    ->disabled(fn () => ! (auth()->user()?->managesVehicles() ?? false)),
             ])
             ->filters([
                 TernaryFilter::make('is_active')->label('Kullanımda'),

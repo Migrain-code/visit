@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
+use App\Enums\Permission;
 use App\Filament\Pages\SystemCommands;
 use App\Jobs\QueueHeartbeat;
 use App\Jobs\RunConsoleCommand;
@@ -54,20 +54,24 @@ class SystemCommandsTest extends TestCase
         Storage::fake('local');
     }
 
-    private function user(UserRole $role): User
+    private int $serial = 0;
+
+    /** @param  array<int, Permission>  $permissions */
+    private function user(array $permissions, bool $superAdmin = false): User
     {
         return User::create([
-            'name' => $role->label(),
-            'email' => $role->value.'@komut.test',
+            'name' => 'Personel '.(++$this->serial),
+            'email' => 'personel'.$this->serial.'@komut.test',
             'password' => 'parola1234',
-            'role' => $role,
+            'is_super_admin' => $superAdmin,
+            'permissions' => array_map(fn (Permission $p) => $p->value, $permissions),
             'is_active' => true,
         ]);
     }
 
     private function admin(): User
     {
-        return $this->user(UserRole::SuperAdmin);
+        return $this->user([], superAdmin: true);
     }
 
     // ---------- İzin listesi ----------
@@ -124,21 +128,23 @@ class SystemCommandsTest extends TestCase
         $this->actingAs($this->admin())->get(SystemCommands::getUrl())->assertOk()->assertSee('Sistem Komutları');
     }
 
-    public static function otherRoles(): array
+    public static function otherPermissions(): array
     {
         return [
-            'operasyon sorumlusu' => [UserRole::Operasyon],
-            'kayıt personeli' => [UserRole::Kayit],
-            'içerik editörü' => [UserRole::Icerik],
-            'rehber' => [UserRole::Rehber],
+            'tur yönetimi' => [[Permission::ToursManage]],
+            'araç atama' => [[Permission::AllocationManage]],
+            'yolcu ekleme' => [[Permission::GroupsCreate]],
+            'raporlar' => [[Permission::ReportsView]],
+            'yetkisiz' => [[]],
         ];
     }
 
     // Her rol ayrı test: tek istekte kullanıcı değiştirmek oturumu karıştırıp yanıltıcı 302 döndürüyor.
-    #[DataProvider('otherRoles')]
-    public function test_other_roles_cannot_open_the_page(UserRole $role): void
+    #[DataProvider('otherPermissions')]
+    public function test_accounts_without_the_settings_permission_cannot_open_the_page(array $permissions): void
     {
-        $this->actingAs($this->user($role))->get(SystemCommands::getUrl())->assertForbidden();
+        $this->actingAs($this->user($permissions))->get(SystemCommands::getUrl())->assertForbidden();
+        $this->actingAs($this->user([Permission::SettingsManage]))->get(SystemCommands::getUrl())->assertOk();
     }
 
     public function test_guests_are_sent_to_login(): void
@@ -152,37 +158,21 @@ class SystemCommandsTest extends TestCase
     {
         $admin = $this->admin();
 
-        $run = app(CommandRunner::class)->start('sitemap', $admin);
+        $run = app(CommandRunner::class)->start('schedule-list', $admin);
 
         $this->assertSame(CommandRun::SUCCEEDED, $run->status);
         $this->assertSame(0, $run->exit_code);
-        $this->assertSame('sitemap:generate', $run->command_line);
+        $this->assertSame('schedule:list', $run->command_line);
         $this->assertSame($admin->id, $run->user_id);
-        $this->assertStringContainsString('Site haritası', (string) $run->output);
+        $this->assertStringContainsString('system:heartbeat', (string) $run->output);
         $this->assertNotNull($run->duration_ms);
-    }
-
-    public function test_background_command_goes_to_the_queue_and_runs_there(): void
-    {
-        Queue::fake();
-
-        $run = app(CommandRunner::class)->start('score', $this->admin());
-
-        $this->assertSame(CommandRun::QUEUED, $run->status);
-        Queue::assertPushed(RunConsoleCommand::class, fn ($job) => $job->runId === $run->id);
-
-        // İşçi işi aldığında komut çalışır. Artisan taklit edilir: skorlama sayfaları render eder, testte gereksiz.
-        Artisan::shouldReceive('call')->once()->with('seo:score', [], \Mockery::any())->andReturn(0);
-        (new RunConsoleCommand($run->id))->handle(app(CommandRunner::class));
-
-        $this->assertSame(CommandRun::SUCCEEDED, $run->refresh()->status);
     }
 
     public function test_failing_command_is_recorded_as_failed_with_the_error(): void
     {
         Artisan::shouldReceive('call')->once()->andThrow(new RuntimeException('bağlantı koptu'));
 
-        $run = app(CommandRunner::class)->start('sitemap', $this->admin());
+        $run = app(CommandRunner::class)->start('schedule-list', $this->admin());
 
         $this->assertSame(CommandRun::FAILED, $run->status);
         $this->assertSame(1, $run->exit_code);
@@ -193,7 +183,7 @@ class SystemCommandsTest extends TestCase
     {
         Artisan::shouldReceive('call')->once()->andReturn(2);
 
-        $run = app(CommandRunner::class)->start('sitemap', $this->admin());
+        $run = app(CommandRunner::class)->start('schedule-list', $this->admin());
 
         $this->assertSame(CommandRun::FAILED, $run->status);
         $this->assertSame(2, $run->exit_code);
@@ -201,25 +191,25 @@ class SystemCommandsTest extends TestCase
 
     public function test_same_command_cannot_run_twice_at_once(): void
     {
-        Queue::fake();
-        $runner = app(CommandRunner::class);
-
-        $admin = $this->admin();
-        $runner->start('score', $admin);
+        // Başka bir istekte hâlâ çalışan kayıt varken aynı komut ikinci kez başlatılamaz.
+        CommandRun::create([
+            'command_key' => 'schedule-list', 'command_line' => 'schedule:list', 'mode' => 'sync',
+            'status' => CommandRun::RUNNING, 'started_at' => now(),
+        ]);
 
         $this->expectException(RuntimeException::class);
-        $runner->start('score', $admin);
+        app(CommandRunner::class)->start('schedule-list', $this->admin());
     }
 
     public function test_a_run_stuck_after_a_server_timeout_is_released(): void
     {
         // Sunucu isteği zaman sınırında öldürürse kayıt "çalışıyor"da asılı kalır.
         $stuck = CommandRun::create([
-            'command_key' => 'sitemap', 'command_line' => 'sitemap:generate', 'mode' => 'sync',
+            'command_key' => 'schedule-list', 'command_line' => 'schedule:list', 'mode' => 'sync',
             'status' => CommandRun::RUNNING, 'started_at' => now()->subHour(),
         ]);
 
-        $run = app(CommandRunner::class)->start('sitemap', $this->admin());
+        $run = app(CommandRunner::class)->start('schedule-list', $this->admin());
 
         $this->assertSame(CommandRun::FAILED, $stuck->refresh()->status);
         $this->assertStringContainsString('Zaman aşımı', (string) $stuck->output);
@@ -234,7 +224,7 @@ class SystemCommandsTest extends TestCase
             return 0;
         });
 
-        $run = app(CommandRunner::class)->start('sitemap', $this->admin());
+        $run = app(CommandRunner::class)->start('schedule-list', $this->admin());
 
         $this->assertStringNotContainsString("\e[", (string) $run->output);
         $this->assertStringStartsWith('Yeşil', (string) $run->output);
@@ -249,10 +239,10 @@ class SystemCommandsTest extends TestCase
         $this->actingAs($this->admin());
 
         Livewire::test(SystemCommands::class)
-            ->callAction('run', arguments: ['key' => 'sitemap'])
+            ->callAction('run', arguments: ['key' => 'schedule-list'])
             ->assertNotified();
 
-        $this->assertDatabaseHas('command_runs', ['command_key' => 'sitemap', 'status' => CommandRun::SUCCEEDED]);
+        $this->assertDatabaseHas('command_runs', ['command_key' => 'schedule-list', 'status' => CommandRun::SUCCEEDED]);
     }
 
     public function test_page_rejects_a_key_outside_the_catalog(): void
@@ -437,16 +427,6 @@ class SystemCommandsTest extends TestCase
         $this->assertTrue(Schema::hasTable('command_runs'), 'migrate tabloyu oluşturmalıydı.');
         // Tabloyu oluşturan çalıştırma, geçmişin ilk kaydı olarak yazılır.
         $this->assertDatabaseHas('command_runs', ['command_key' => 'migrate', 'status' => CommandRun::SUCCEEDED]);
-    }
-
-    public function test_background_commands_explain_what_to_do_before_the_table_exists(): void
-    {
-        $this->simulateFreshDeploy();
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Veritabanını güncelle');
-
-        app(CommandRunner::class)->start('score', $this->admin());
     }
 
     // ---------- Görsel bağlantısı (storage:link) ----------

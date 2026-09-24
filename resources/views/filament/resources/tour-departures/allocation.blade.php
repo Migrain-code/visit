@@ -23,8 +23,8 @@
 
         @if ($vehicles->isEmpty())
             <div class="rounded-xl border border-danger-300 bg-danger-50 p-4 text-sm text-danger-800 dark:border-danger-800 dark:bg-danger-950/40 dark:text-danger-300">
-                <strong>Bu sefere henüz araç atanmadı.</strong>
-                "Özet" sekmesindeki <em>Araçlar</em> bölümünden hazır araç listesinden araç ekleyin; gruplar ancak ondan sonra dağıtılabilir.
+                <strong>Bu tura henüz araç atanmadı.</strong>
+                <a class="underline" href="{{ \App\Filament\Pages\VehicleWizard::getUrl(['tour' => $departure->getKey()]) }}">Araç Liste Sihirbazı</a>'ndan araç ekleyin; gruplar ancak ondan sonra dağıtılabilir.
             </div>
         @elseif ($overbooked)
             <div class="rounded-xl border border-danger-300 bg-danger-50 p-4 text-sm text-danger-800 dark:border-danger-800 dark:bg-danger-950/40 dark:text-danger-300">
@@ -107,7 +107,7 @@
                     @include('filament.resources.tour-departures.partials.group-row', ['group' => $group])
                 @empty
                     <li class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">
-                        {{ $registered > 0 ? 'Bekleyen grup yok: herkes bir araca yerleşti.' : 'Bu sefere henüz grup kaydedilmedi.' }}
+                        {{ $registered > 0 ? 'Bekleyen grup yok: herkes bir araca yerleşti.' : 'Bu tura henüz yolcu eklenmedi.' }}
                     </li>
                 @endforelse
             </ul>

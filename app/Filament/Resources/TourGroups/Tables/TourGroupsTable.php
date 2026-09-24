@@ -20,15 +20,15 @@ class TourGroupsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['departure.tour', 'vehicle', 'creator']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['departure', 'vehicle', 'creator', 'passengers']))
             ->columns([
-                TextColumn::make('code')->label('Kod')->badge()->color('gray')->searchable()->sortable(),
-                TextColumn::make('contact_name')->label('Grup / ilgili kişi')->searchable(['contact_name', 'name', 'contact_phone'])->weight('semibold')
-                    ->formatStateUsing(fn (TourGroup $record) => $record->name ?: $record->contact_name)
-                    ->description(fn (TourGroup $record) => $record->contact_phone),
-                TextColumn::make('departure.starts_at')->label('Sefer')->dateTime('d.m.Y')->sortable()
-                    ->description(fn (TourGroup $record) => $record->departure?->tour?->title),
+                TextColumn::make('name')->label('Grup')->searchable(['name', 'contact_name', 'contact_phone'])->weight('semibold')
+                    ->description(fn (TourGroup $record) => $record->passengers->map(fn ($p) => $p->full_name)->take(4)->implode(', ')
+                        .($record->passengers->count() > 4 ? ' …' : '')),
+                TextColumn::make('departure.starts_at')->label('Tur')->date('d.m.Y')->sortable()
+                    ->description(fn (TourGroup $record) => $record->departure?->title),
                 TextColumn::make('passenger_count')->label('Kişi')->badge()->color('info')->sortable(),
+                TextColumn::make('contact_phone')->label('Telefon')->copyable()->toggleable(),
                 TextColumn::make('vehicle.name')->label('Araç')->placeholder('Yerleşmedi')->badge()
                     ->color(fn (?string $state) => $state ? 'success' : 'warning'),
                 TextColumn::make('balance')->label('Kalan ödeme')
@@ -37,7 +37,7 @@ class TourGroupsTable
                     ->badge()
                     ->color(fn ($state) => (float) $state <= 0 ? 'success' : 'danger')
                     ->placeholder('-')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->label('Durum')->badge()
                     ->formatStateUsing(fn (GroupStatus $state) => $state->label())
                     ->color(fn (GroupStatus $state) => $state->color()),
@@ -46,14 +46,14 @@ class TourGroupsTable
             ])
             ->filters([
                 SelectFilter::make('tour_departure_id')
-                    ->label('Sefer')
-                    ->options(fn () => TourDeparture::query()->visibleTo(auth()->user())->with('tour:id,title')
+                    ->label('Tur')
+                    ->options(fn () => TourDeparture::query()->visibleTo(auth()->user())
                         ->orderByDesc('starts_at')->limit(100)->get()
-                        ->mapWithKeys(fn (TourDeparture $d) => [$d->id => $d->starts_at->format('d.m.Y').' · '.$d->tour?->title]))
+                        ->mapWithKeys(fn (TourDeparture $d) => [$d->id => $d->starts_at->format('d.m.Y').' · '.$d->title]))
                     ->searchable(),
                 SelectFilter::make('status')->label('Durum')->options(GroupStatus::options()),
                 Filter::make('upcoming')
-                    ->label('Yalnız yaklaşan seferler')
+                    ->label('Yalnız yaklaşan turlar')
                     ->query(fn (Builder $query) => $query->whereHas('departure', fn (Builder $q) => $q->upcoming()))
                     ->default(),
                 Filter::make('waiting')
@@ -68,11 +68,13 @@ class TourGroupsTable
                     ->label('WhatsApp')
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->color('success')
+                    ->iconButton()
+                    ->visible(fn (TourGroup $record) => phone_digits($record->contact_phone) !== '')
                     ->url(fn (TourGroup $record) => 'https://wa.me/'.ltrim(phone_digits($record->contact_phone), '+'))
                     ->openUrlInNewTab(),
-                ViewAction::make(),
-                EditAction::make(),
-                DeleteAction::make(),
+                ViewAction::make()->iconButton(),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton(),
             ])
             ->defaultSort('id', 'desc');
     }

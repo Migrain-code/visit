@@ -12,8 +12,7 @@ namespace App\Support\Console;
  * Kip:
  *   sync        → istek içinde çalışır, çıktı hemen görünür. Kısa işler için.
  *   background  → kuyruğa gider, kuyruk işçisi çalıştırır. Hostingde web isteği
- *                 genelde 30-120 saniyede kesilir; yapay zeka ve Google çağrısı
- *                 yapan uzun işler bu yüzden arka planda koşar.
+ *                 genelde 30-120 saniyede kesilir; uzun işler bu yüzden arka planda koşar.
  */
 final class CommandCatalog
 {
@@ -36,7 +35,6 @@ final class CommandCatalog
         'setup' => 'Kurulum ve güncelleme',
         'operations' => 'Tur operasyonu',
         'cache' => 'Önbellek',
-        'seo' => 'SEO ve içerik',
         'queue' => 'Kuyruk',
         'diagnostics' => 'Tanılama',
     ];
@@ -57,12 +55,14 @@ final class CommandCatalog
             'storage-link' => self::entry('storage:link', [], 'Görsel bağlantısını kur',
                 'Yüklenen görsellerin sitede görünmesi için public/storage bağlantısını oluşturur. Kurulumda bir kez yeterli. Hosting buna izin vermiyorsa sayfa size tek seferlik bir cron komutu verir.',
                 'setup'),
-            'allocate-upcoming' => self::entry('tours:allocate-upcoming', [], 'Yaklaşan seferleri yerleştir',
-                'Kalkışı yaklaşan seferlerde araçsız kalan grupları boş koltuklara yerleştirir. Yerleşmiş gruplara dokunmaz; gruplar bölünmez. Normalde saat başı kendiliğinden çalışır.',
-                'operations'),
             'filament-assets' => self::entry('filament:assets', [], 'Panel dosyalarını yayınla',
                 'Yönetim panelinin stil ve betik dosyalarını public klasörüne kopyalar. Panel bozuk görünüyorsa çalıştırın.',
                 'setup'),
+
+            // ---------- Tur operasyonu ----------
+            'allocate-upcoming' => self::entry('tours:allocate-upcoming', [], 'Yaklaşan turları yerleştir',
+                'Kalkışı yaklaşan turlarda araçsız kalan grupları boş koltuklara yerleştirir. Yerleşmiş gruplara dokunmaz; gruplar bölünmez. Normalde saat başı kendiliğinden çalışır.',
+                'operations'),
 
             // ---------- Önbellek ----------
             'optimize' => self::entry('optimize', [], 'Önbellekleri oluştur',
@@ -75,64 +75,11 @@ final class CommandCatalog
                 '.env dosyasında yaptığınız değişikliğin okunmasını sağlar.',
                 'cache'),
             'cache-clear' => self::entry('cache:clear', [], 'Uygulama önbelleğini temizle',
-                'Site haritası dahil tüm önbelleğe alınmış veriyi siler.',
+                'Önbelleğe alınmış tüm veriyi siler.',
                 'cache'),
             'view-clear' => self::entry('view:clear', [], 'Görünüm önbelleğini temizle',
                 'Tema dosyası değişikliği sitede görünmüyorsa çalıştırın.',
                 'cache'),
-
-            // ---------- SEO ve içerik ----------
-            'sitemap' => self::entry('sitemap:generate', [], 'Site haritasını yenile',
-                'sitemap.xml önbelleğini temizler; bir sonraki istekte güncel hâliyle üretilir.',
-                'seo'),
-            'discovery' => self::entry('seo:discovery', [], 'llms.txt dosyalarını üret',
-                'Yapay zeka ajanları için llms.txt ve llms-full.txt dosyalarını veritabanından yeniden yazar. Alan adı değişince mutlaka çalıştırın.',
-                'seo'),
-            'sync-targets' => self::entry('seo:sync-targets', [], 'SEO hedeflerini eşitle',
-                'Tur, kategori ve bölge sayfalarından SEO hedef listesini günceller.',
-                'seo'),
-            'location-keywords' => self::entry('seo:location-keywords', [], 'Bölge kelimelerini üret',
-                'Aktif il ve ilçeler için bölge adlı anahtar kelimeleri üretir.',
-                'seo'),
-            'catalog-keywords' => self::entry('seo:catalog-keywords', [], 'Tur kelimelerini üret',
-                'Yayındaki tur ve kategoriler için anahtar kelimeleri üretir ve sayfalarına atar.',
-                'seo'),
-            'link-rules' => self::entry('links:build-rules', [], 'İç link kurallarını üret',
-                'Yayındaki sayfalardan iç link kurallarını oluşturur.',
-                'seo'),
-            'links-apply' => self::entry('links:apply', [], 'İç linkleri içeriğe işle',
-                'İç link kurallarını yayındaki içeriklerin gövdesine yazar. Paneldeki otomatik uygulama ayarına uyar.',
-                'seo', mode: 'background'),
-            'score' => self::entry('seo:score', [], 'SEO skorlarını hesapla',
-                'Yayındaki tüm sayfaları yeniden skorlar. Sayfaları tek tek açtığı için birkaç dakika sürebilir.',
-                'seo', mode: 'background'),
-            'publish-due' => self::entry('blog:publish-due', [], 'Zamanı gelen yazıları yayınla',
-                'Yayın tarihi geçmiş planlı blog yazılarını hemen yayına alır.',
-                'seo'),
-            'suggest-redirects' => self::entry('seo:suggest-redirects', [], 'Yönlendirme önerilerini üret',
-                '404 kayıtlarından 301 yönlendirme önerileri çıkarır. Önerileri uygulamaz.',
-                'seo'),
-            'blog-generate' => self::entry('blog:generate', [], 'Blog yazısı üret (yapay zeka)',
-                'Yazı stoku azsa yeni konular bulup yazıları kuyruğa gönderir. Yapay zeka çağrısı yapar, ücretlidir.',
-                'seo', mode: 'background', danger: true),
-            'enrich' => self::entry('seo:enrich', ['--limit' => 3], 'Zayıf sayfaları zenginleştir (yapay zeka)',
-                'Hedef skorun altındaki en fazla 3 sayfanın içeriğini yapay zekayla genişletir. Ücretlidir.',
-                'seo', mode: 'background', danger: true),
-            'refresh-meta' => self::entry('seo:refresh-meta', [], 'Düşük tıklamalı başlıkları yenile (yapay zeka)',
-                'Search Console verisine göre az tıklanan sayfaların meta başlık ve açıklamalarını yeniden yazar. Ücretlidir.',
-                'seo', mode: 'background', danger: true),
-            'sync-search-console' => self::entry('seo:sync-search-console', [], 'Search Console verisini çek',
-                'Son 28 günün arama sorgularını Google Search Console\'dan alır.',
-                'seo', mode: 'background'),
-            'sync-rankings' => self::entry('seo:sync-rankings', [], 'Sıralamaları güncelle',
-                'Hedef kelimelerin Google sıralamalarını Search Console verisinden günceller.',
-                'seo', mode: 'background'),
-            'check-index' => self::entry('seo:check-index', [], 'Dizin durumunu kontrol et',
-                'Sayfaların Google dizininde olup olmadığını Search Console\'a sorar.',
-                'seo', mode: 'background'),
-            'discover-keywords' => self::entry('seo:discover-keywords', [], 'Yeni kelime fırsatlarını bul',
-                'Search Console sorgularından henüz hedeflenmeyen kelimeleri kelime havuzuna ekler.',
-                'seo', mode: 'background'),
 
             // ---------- Kuyruk ----------
             'queue-retry' => self::entry('queue:retry', ['id' => ['all']], 'Başarısız işleri tekrar dene',

@@ -23,7 +23,7 @@ use UnitEnum;
 /**
  * Terminal erişimi olmayan sunucu için komut paneli.
  *
- * YALNIZ süper yönetici görür. Yalnız CommandCatalog'daki komutlar, oradaki sabit
+ * YALNIZ "site ayarları ve sistem komutları" yetkisi olan görür. Yalnız CommandCatalog'daki komutlar, oradaki sabit
  * parametrelerle çalışır; ekranda serbest komut yazılacak bir alan yoktur.
  */
 class SystemCommands extends Page
@@ -42,7 +42,7 @@ class SystemCommands extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return auth()->user()?->managesSettings() ?? false;
     }
 
     /** Zamanlayıcı veya kuyruk çalışmıyorsa menüde uyarı rozeti çıkar. */
@@ -104,7 +104,7 @@ class SystemCommands extends Page
             ->modalSubmitActionLabel('Evet, çalıştır')
             ->action(function (array $arguments, CommandRunner $runner) {
                 // Sayfa erişimine ek olarak eylemde de yetki denetlenir.
-                abort_unless(auth()->user()?->isSuperAdmin(), 403);
+                abort_unless(auth()->user()?->managesSettings(), 403);
 
                 try {
                     $run = $runner->start((string) ($arguments['key'] ?? ''), auth()->user());

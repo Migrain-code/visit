@@ -31,7 +31,7 @@ class PassengerResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operasyon';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'Yolcu';
 
@@ -44,14 +44,14 @@ class PassengerResource extends Resource
         return false;
     }
 
-    /** Rehber yalnız kendi seferlerinin yolcularını görür. */
+    /** Yetkisiz hesap (rehber) yalnız kendi turlarının yolcularını görür. */
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
 
         return parent::getEloquentQuery()
-            ->with(['group.departure.tour', 'group.vehicle'])
-            ->when($user?->isGuide(), fn (Builder $q) => $q->whereHas('group.departure', fn (Builder $d) => $d->where('guide_id', $user->getKey())));
+            ->with(['group.departure', 'group.vehicle'])
+            ->when($user?->isGuideOnly(), fn (Builder $q) => $q->whereHas('group.departure', fn (Builder $d) => $d->visibleTo($user)));
     }
 
     public static function table(Table $table): Table
@@ -71,19 +71,19 @@ class PassengerResource extends Resource
                     ->searchable(query: fn (Builder $query, string $search) => $query
                         ->where('tc_no', $search)->orWhere('passport_no', $search)),
                 TextColumn::make('phone')->label('Telefon')->placeholder('-')->searchable(),
-                TextColumn::make('age')->label('Yaş')->placeholder('-')->sortable(),
+                TextColumn::make('pickup_point')->label('Biniş')->placeholder('-')->toggleable(),
                 TextColumn::make('gender')->label('Cinsiyet')->placeholder('-')
-                    ->formatStateUsing(fn (?Gender $state) => $state?->label()),
-                TextColumn::make('group.code')->label('Grup')->badge()->color('gray')
-                    ->description(fn (Passenger $record) => $record->group?->contact_name),
-                TextColumn::make('group.departure.starts_at')->label('Sefer')->dateTime('d.m.Y')
-                    ->description(fn (Passenger $record) => $record->group?->departure?->tour?->title),
+                    ->formatStateUsing(fn (?Gender $state) => $state?->label())
+                    ->toggleable(),
+                TextColumn::make('group.name')->label('Grup')->badge()->color('gray'),
+                TextColumn::make('group.departure.starts_at')->label('Tur')->date('d.m.Y')
+                    ->description(fn (Passenger $record) => $record->group?->departure?->title),
                 TextColumn::make('group.vehicle.name')->label('Araç')->placeholder('Yerleşmedi')->badge()
                     ->color(fn (?string $state) => $state ? 'success' : 'warning'),
             ])
             ->filters([
                 Filter::make('upcoming')
-                    ->label('Yalnız yaklaşan seferler')
+                    ->label('Yalnız yaklaşan turlar')
                     ->query(fn (Builder $query) => $query->whereHas('group.departure', fn (Builder $q) => $q->upcoming()))
                     ->default(),
                 SelectFilter::make('gender')->label('Cinsiyet')->options(Gender::options()),

@@ -12,18 +12,11 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             ImageSeeder::class,
             SettingsSeeder::class,
-            TourSeeder::class,
             VehicleSeeder::class,
-            FeatureSeeder::class,
-            RegionSeeder::class,
-            GallerySeeder::class,
-            FaqSeeder::class,
-            PageSeeder::class,
-            BlogSeeder::class,
-            SeoKeywordSeeder::class,
+            TourSeeder::class,
         ]);
 
-        // Örnek seferler ve kurgusal yolcular canlı siteye YAZILMAZ.
+        // Örnek gruplar ve kurgusal yolcular canlı siteye YAZILMAZ.
         if (! app()->isProduction()) {
             $this->call(DemoOperationSeeder::class);
         }

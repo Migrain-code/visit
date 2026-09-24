@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +11,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Varsayılan rol en DAR yetkili olandır: rolü unutulan bir hesap yolcu verisini göremesin.
-            $table->string('role', 30)->default(UserRole::Rehber->value)->index()->after('email');
+            $table->string('role', 30)->default('rehber')->index()->after('email');
 
             // Personel kartı — web sitesinin ön yüzünde gösterilebilir.
             $table->string('title')->nullable()->after('role');          // ünvan
@@ -26,7 +25,7 @@ return new class extends Migration
         });
 
         // Mevcut tek kullanıcı süper yönetici olur; aksi hâlde kimse panele giremez.
-        DB::table('users')->orderBy('id')->limit(1)->update(['role' => UserRole::SuperAdmin->value]);
+        DB::table('users')->orderBy('id')->limit(1)->update(['role' => 'super_admin']);
     }
 
     public function down(): void

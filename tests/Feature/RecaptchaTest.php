@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\District;
-use App\Models\Province;
 use App\Models\ReservationRequest;
-use App\Models\Tour;
+use App\Models\TourDeparture;
 use App\Services\Security\Recaptcha;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -37,14 +35,10 @@ class RecaptchaTest extends TestCase
 
     private function payload(array $overrides = []): array
     {
-        $province = Province::where('slug', 'rize')->first();
-
         return array_merge([
             'name' => 'Test Misafir',
             'phone' => '0532 111 22 33',
-            'province_id' => $province->id,
-            'district_id' => District::where('province_id', $province->id)->where('slug', 'ardesen')->value('id'),
-            'tour_id' => Tour::where('slug', 'ayder-yaylasi-turu')->value('id'),
+            'tour_departure_id' => TourDeparture::query()->bookable()->value('id'),
             'people_count' => 2,
             'kvkk' => '1',
         ], $overrides);
@@ -68,7 +62,7 @@ class RecaptchaTest extends TestCase
         config(['services.recaptcha.site_key' => null, 'services.recaptcha.secret_key' => null]);
         Http::fake(); // Google'a hiç gidilmemeli
 
-        $this->post('/rezervasyon', $this->payload())->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload())->assertRedirect(route('contact.thanks'));
 
         $this->assertDatabaseCount('reservation_requests', 1);
         Http::assertNothingSent();
@@ -82,8 +76,8 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => true, 'score' => 0.9, 'action' => 'rezervasyon_formu']),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'gecerli-jeton']))
-            ->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'gecerli-jeton']))
+            ->assertRedirect(route('contact.thanks'));
 
         $this->assertDatabaseCount('reservation_requests', 1);
     }
@@ -96,7 +90,7 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => true, 'score' => 0.1, 'action' => 'rezervasyon_formu']),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'bot-jetonu']))
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'bot-jetonu']))
             ->assertSessionHasErrors(Recaptcha::FIELD);
 
         $this->assertDatabaseCount('reservation_requests', 0);
@@ -107,7 +101,7 @@ class RecaptchaTest extends TestCase
         $this->enable();
 
         $this->assertSame('rezervasyon_formu', app(Recaptcha::class)->action());
-        $this->get('/rezervasyon')->assertOk()->assertSee('"rezervasyon_formu"', false);
+        $this->get('/iletisim')->assertOk()->assertSee('"rezervasyon_formu"', false);
     }
 
     public function test_token_from_another_action_is_rejected(): void
@@ -119,7 +113,7 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => true, 'score' => 0.9, 'action' => 'baska_sayfa']),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'tasinmis-jeton']))
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'tasinmis-jeton']))
             ->assertSessionHasErrors(Recaptcha::FIELD);
     }
 
@@ -128,7 +122,7 @@ class RecaptchaTest extends TestCase
         $this->enable();
         Http::fake();
 
-        $this->post('/rezervasyon', $this->payload())->assertSessionHasErrors(Recaptcha::FIELD);
+        $this->post('/iletisim', $this->payload())->assertSessionHasErrors(Recaptcha::FIELD);
 
         $this->assertDatabaseCount('reservation_requests', 0);
         // Boş jeton için Google'a gitmeye gerek yok.
@@ -144,8 +138,8 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => true]),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'kutucuk-jetonu']))
-            ->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'kutucuk-jetonu']))
+            ->assertRedirect(route('contact.thanks'));
 
         $this->assertDatabaseCount('reservation_requests', 1);
     }
@@ -158,7 +152,7 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => false, 'error-codes' => ['invalid-input-response']]),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'sahte']))
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'sahte']))
             ->assertSessionHasErrors(Recaptcha::FIELD);
 
         $this->assertDatabaseCount('reservation_requests', 0);
@@ -171,8 +165,8 @@ class RecaptchaTest extends TestCase
         // Ağ hatası gerçek misafiri kapıda bırakmamalı (bilinçli fail-open).
         Http::fake(fn () => throw new ConnectionException('bağlanılamadı'));
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'jeton']))
-            ->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'jeton']))
+            ->assertRedirect(route('contact.thanks'));
 
         $this->assertDatabaseCount('reservation_requests', 1);
     }
@@ -183,8 +177,8 @@ class RecaptchaTest extends TestCase
 
         Http::fake(['www.google.com/*' => Http::response('', 503)]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'jeton']))
-            ->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'jeton']))
+            ->assertRedirect(route('contact.thanks'));
 
         $this->assertDatabaseCount('reservation_requests', 1);
     }
@@ -202,7 +196,7 @@ class RecaptchaTest extends TestCase
     {
         $this->enable();
 
-        $response = $this->get('/rezervasyon');
+        $response = $this->get('/iletisim');
 
         $response->assertOk();
         $response->assertSee('name="'.Recaptcha::FIELD.'"', false);
@@ -218,7 +212,7 @@ class RecaptchaTest extends TestCase
     {
         $this->enable('v2');
 
-        $response = $this->get('/rezervasyon');
+        $response = $this->get('/iletisim');
 
         $response->assertOk();
         $response->assertSee('g-recaptcha', false);
@@ -232,19 +226,19 @@ class RecaptchaTest extends TestCase
     {
         config(['services.recaptcha.site_key' => null, 'services.recaptcha.secret_key' => null]);
 
-        $this->get('/rezervasyon')->assertOk()
+        $this->get('/iletisim')->assertOk()
             ->assertDontSee('recaptcha/api.js', false)
             ->assertDontSee('window.__recaptcha', false)
             // Form yine de işaretlidir; yükleyici yapılandırma yoksa hiçbir şey yapmaz.
             ->assertSee('data-recaptcha', false);
     }
 
-    public function test_contact_page_form_is_protected_too(): void
+    public function test_job_application_form_is_protected_too(): void
     {
         $this->enable();
 
-        // Aynı form iletişim sayfasında da var; yapılandırma betiği sayfaya BİR kez yazılır.
-        $html = $this->get('/iletisim')->assertOk()->getContent();
+        // İş başvurusu formu da korunur; yapılandırma betiği sayfaya BİR kez yazılır.
+        $html = $this->get('/is-basvurusu')->assertOk()->getContent();
 
         $this->assertStringContainsString('name="'.Recaptcha::FIELD.'"', $html);
         $this->assertSame(1, substr_count($html, 'window.__recaptcha = {'));
@@ -255,7 +249,7 @@ class RecaptchaTest extends TestCase
     {
         $this->enable();
 
-        foreach (['/', '/turlar', '/tur-takvimi', '/ayder-yaylasi-turu'] as $url) {
+        foreach (['/', '/iletisim/tesekkurler'] as $url) {
             $this->get($url)->assertOk()
                 ->assertDontSee('window.__recaptcha', false)
                 ->assertDontSee('google.com/recaptcha', false);
@@ -271,9 +265,9 @@ class RecaptchaTest extends TestCase
         ]);
 
         // Geçerli jeton diğer kuralları atlatmaz.
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'gecerli-jeton', 'website' => 'https://spam.example']))
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'gecerli-jeton', 'website' => 'https://spam.example']))
             ->assertSessionHasErrors('website');
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'gecerli-jeton', 'kvkk' => null]))
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'gecerli-jeton', 'kvkk' => null]))
             ->assertSessionHasErrors('kvkk');
 
         $this->assertDatabaseCount('reservation_requests', 0);
@@ -287,8 +281,8 @@ class RecaptchaTest extends TestCase
             'www.google.com/*' => Http::response(['success' => true, 'score' => 0.9, 'action' => 'rezervasyon_formu']),
         ]);
 
-        $this->post('/rezervasyon', $this->payload(['g-recaptcha-response' => 'gecerli-jeton']))
-            ->assertRedirect(route('reservation.thanks'));
+        $this->post('/iletisim', $this->payload(['g-recaptcha-response' => 'gecerli-jeton']))
+            ->assertRedirect(route('contact.thanks'));
 
         $reservation = ReservationRequest::firstOrFail();
 

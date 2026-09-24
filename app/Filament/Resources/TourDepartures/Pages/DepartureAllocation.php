@@ -18,7 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use RuntimeException;
 
 /**
- * Araç dağılım panosu: grupları sefere atanmış araçlara yerleştirir.
+ * Araç dağılım panosu: grupları tura atanmış araçlara yerleştirir.
  *
  * GRUP BÖLÜNMEZ. Otomatik dağıtım da elle taşıma da bir grubu yalnız BÜTÜN hâlinde
  * tek bir araca koyar; sığmıyorsa açıkta bırakır ve nedenini söyler.
@@ -46,7 +46,7 @@ class DepartureAllocation extends Page
 
     public function getSubheading(): ?string
     {
-        return $this->getRecord()->label.' · '.$this->getRecord()->code;
+        return $this->getRecord()->date_label;
     }
 
     private function canAllocate(): bool

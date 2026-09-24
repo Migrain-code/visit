@@ -1,54 +1,46 @@
 // =====================================================================
-// Visit Tur — tema stilleri
-// Yapı: ince üst bar, beyaz yapışkan başlık, büyük görselli hero + tur arama,
-// tur kartları, yaklaşan seferler listesi, kum rengi bölümler, koyu petrol footer.
+// RTEÜ Geziyor — tema stilleri
+// Mobil uygulama görünümü: lacivert üst bar, büyük görselli hero kartı, tur
+// kartları, öne çıkanlar şeridi, Instagram bandı. Masaüstünde aynı düzen
+// ortalanmış geniş bir "uygulama kabuğu" (app-shell) içinde durur.
 // =====================================================================
 
 :root {
-    --vt-header-h: 84px;
-    --vt-radius: #{$border-radius-lg};
-    --vt-shadow: 0 18px 50px #{rgba($ink, .10)};
-    --vt-shadow-sm: 0 8px 24px #{rgba($ink, .07)};
+    --rg-header-h: 72px;
+    --rg-radius: #{$border-radius-lg};
+    --rg-shadow: 0 14px 40px #{rgba($ink, .10)};
+    --rg-shadow-sm: 0 6px 18px #{rgba($ink, .07)};
 }
 
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--vt-header-h) + 1rem); }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--rg-header-h) + 1rem); }
 body { overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 img { max-width: 100%; height: auto; }
-h1, h2, h3, .display-font { letter-spacing: -.015em; }
-h4, h5, h6 { font-family: $font-family-sans-serif; font-weight: 700; letter-spacing: -.005em; }
-::selection { background: rgba($accent, .25); }
+h1, h2, h3 { letter-spacing: -.02em; }
+::selection { background: rgba($sun, .4); }
 
-.text-accent { color: $accent !important; }
-.text-brand { color: $brand !important; }
-.bg-sand { background: $sand; }
-.bg-mist { background: $mist; }
-.bg-deep { background: $deep; }
-.fw-500 { font-weight: 500; }
-
-.section { padding: 5.5rem 0; }
-.section-sm { padding: 3.5rem 0; }
-@include media-breakpoint-down(md) {
-    .section { padding: 3.75rem 0; }
-    .section-sm { padding: 2.5rem 0; }
-}
+.app-shell { max-width: 1120px; }
+.app-main { padding-bottom: 2.5rem; }
 
 // ---------------------------------------------------------------
 // Butonlar
 // ---------------------------------------------------------------
 .btn { transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease, border-color .2s ease; display: inline-flex; align-items: center; justify-content: center; gap: .55rem; }
-.btn-lg { padding: .95rem 1.9rem; font-size: 1rem; }
+.btn-lg { padding: .95rem 1.8rem; font-size: 1rem; }
 .btn-sm { padding: .5rem 1.05rem; font-size: .85rem; }
 
-.btn-accent {
-    @include button-variant($accent, $accent, #fff, $accent-dark, $accent-dark, #fff);
-    background-image: linear-gradient(135deg, #ff8a3d 0%, $accent 55%, #f0481a 100%);
-    border-color: transparent;
-    box-shadow: 0 10px 24px rgba($accent, .35);
-    &:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba($accent, .42); }
+.btn-sun {
+    @include button-variant($sun, $sun, $ink, $sun-dark, $sun-dark, $ink);
+    box-shadow: 0 10px 24px rgba($sun, .35);
+    &:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba($sun, .45); }
 }
-.btn-brand { @include button-variant($brand, $brand, #fff, $brand-dark, $brand-dark, #fff); background-image: linear-gradient(135deg, $aqua 0%, $brand 60%); border-color: transparent; &:hover { background-image: linear-gradient(135deg, darken($aqua, 6%) 0%, $brand-dark 60%); } }
-.btn-deep { @include button-variant($deep, $deep, #fff, $ink, $ink, #fff); background-image: linear-gradient(135deg, $brand 0%, $deep 100%); border-color: transparent; }
+.btn-navy { @include button-variant($ink, $ink, #fff, $deep, $deep, #fff); }
+.btn-outline-navy { @include button-outline-variant($ink, #fff, $ink, $ink); }
 .btn-whatsapp { @include button-variant($whatsapp, $whatsapp, #fff, $whatsapp-dark, $whatsapp-dark, #fff); }
+.btn-instagram {
+    color: #fff; border: 0;
+    background: linear-gradient(90deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%);
+    &:hover { color: #fff; filter: brightness(1.05); }
+}
 // "Ara" düğmesi: yeşil, oval, ikonlu. Telefon ikonu hafifçe sallanarak dikkat çeker.
 .btn-call {
     @include button-variant($leaf, $leaf, #fff, darken($leaf, 7%), darken($leaf, 7%), #fff);
@@ -63,571 +55,270 @@ h4, h5, h6 { font-family: $font-family-sans-serif; font-weight: 700; letter-spac
     75% { transform: rotate(-14deg); } 80% { transform: rotate(12deg); }
     85% { transform: rotate(-10deg); } 90% { transform: rotate(8deg); } 95% { transform: rotate(-4deg); }
 }
-.btn-outline-brand { @include button-outline-variant($brand, #fff, $brand, $brand); }
-.btn-outline-white {
-    @include button-outline-variant(#fff, $ink, #fff, #fff);
-    border-color: rgba(#fff, .6);
+
+.icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(#fff, .12); color: #fff; font-size: 1.15rem; transition: background .2s ease;
+    &:hover { background: rgba(#fff, .22); color: #fff; }
 }
-.btn-white { @include button-variant(#fff, #fff, $ink, $sand, $sand, $ink); }
 
 .link-arrow {
-    font-weight: 600; color: $brand; display: inline-flex; align-items: center; gap: .4rem;
+    font-weight: 700; color: $accent; display: inline-flex; align-items: center; gap: .4rem; font-size: .95rem;
     i { transition: transform .2s ease; font-size: .8em; }
-    &:hover { color: $accent; i { transform: translateX(4px); } }
-}
-
-// ---------------------------------------------------------------
-// Bölüm başlıkları
-// ---------------------------------------------------------------
-.eyebrow {
-    display: inline-flex; align-items: center; gap: .5rem; font-size: .8rem; font-weight: 700;
-    letter-spacing: .14em; text-transform: uppercase; color: $accent; margin-bottom: .75rem;
-    &::before { content: ''; width: 28px; height: 3px; background: linear-gradient(90deg, $accent, $sun); border-radius: 3px; }
-}
-.section-title {
-    margin-bottom: 2.75rem; max-width: 720px;
-    &.text-center { margin-left: auto; margin-right: auto; .eyebrow { justify-content: center; } }
-    h2 { margin-bottom: .75rem; }
-    p { margin-bottom: 0; font-size: 1.05rem; }
-    &.light { h2 { color: #fff; } p { color: rgba(#fff, .78); } .eyebrow { color: $sun; } }
-}
-@include media-breakpoint-down(md) {
-    h1, .h1 { font-size: 2.2rem; }
-    h2, .h2 { font-size: 1.75rem; }
+    &:hover { color: $ink; i { transform: translateX(4px); } }
 }
 
 // ---------------------------------------------------------------
 // Üst bar
 // ---------------------------------------------------------------
-.topbar {
-    background: linear-gradient(90deg, $deep 0%, $brand 60%, $aqua 100%); color: rgba(#fff, .9); font-size: .85rem; padding: .5rem 0;
-    a { color: rgba(#fff, .9); &:hover { color: $sun; } }
-    i { color: $sun; margin-right: .4rem; }
-}
-.topbar-list, .topbar-social { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 1.5rem; }
-.topbar-social { gap: 1rem; i { margin: 0; } .wa-link i { color: $whatsapp; margin-right: .35rem; } }
-
-// ---------------------------------------------------------------
-// Başlık (header)
-// ---------------------------------------------------------------
 .site-header {
-    position: sticky; top: 0; z-index: 1030; background: rgba(#fff, .96); backdrop-filter: saturate(140%) blur(8px);
-    border-bottom: 1px solid transparent; transition: box-shadow .25s ease, border-color .25s ease;
-    .navbar { min-height: var(--vt-header-h); }
-    &.is-sticky { box-shadow: 0 8px 30px rgba($ink, .08); border-color: $line; }
+    position: sticky; top: 0; z-index: 1030; background: $ink; color: #fff;
+    transition: box-shadow .25s ease;
+    &.is-sticky { box-shadow: 0 8px 30px rgba($deep, .35); }
 }
-.brand {
-    display: inline-flex; align-items: center; flex-shrink: 0;
-    img { height: 52px; width: auto; display: block; }
+.header-bar { min-height: var(--rg-header-h); display: flex; align-items: center; gap: 1rem; }
+.brand { display: inline-flex; align-items: center; gap: .65rem; color: #fff; flex-shrink: 0; &:hover { color: #fff; } }
+.brand-logo { height: 48px; width: auto; }
+.brand-mark { width: 48px; height: 48px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1; }
+.brand-name {
+    font-weight: 800; font-size: 1.35rem; letter-spacing: .02em; color: #fff;
+    em { font-style: normal; color: $sun; }
 }
+.brand-tagline { font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: rgba(#fff, .7); margin-top: .35rem; }
 .main-nav {
-    gap: .15rem;
-    .nav-link {
-        font-weight: 600; font-size: .95rem; color: $ink; padding: .6rem .85rem !important; border-radius: 999px; white-space: nowrap;
-        &:hover, &.active { color: $brand; background: $mist; }
-    }
-    .dropdown:hover > .dropdown-menu, .dropdown:focus-within > .dropdown-menu { display: block; }
-    .dropdown-menu { margin-top: 0; border: 1px solid $line; box-shadow: $dropdown-box-shadow; min-width: 270px; }
-    .dropdown-toggle::after { border: 0; content: '\f107'; font-family: 'Font Awesome 7 Free'; font-weight: 900; font-size: .7em; vertical-align: 0; margin-left: .35rem; }
-    .dropdown-item { font-weight: 500; font-size: .93rem; border-radius: .5rem; margin: 0 .4rem; width: auto; small { color: $muted; font-weight: 400; } }
+    list-style: none; margin: 0 auto; padding: 0; display: flex; gap: .25rem;
+    a { display: inline-block; padding: .55rem .9rem; border-radius: 999px; color: rgba(#fff, .85); font-weight: 600; font-size: .95rem;
+        &:hover, &.active { color: $ink; background: $sun; } }
 }
-.dropdown-mega {
-    width: min(760px, 92vw); padding: 1.25rem 1.5rem !important; left: 50% !important; transform: translateX(-50%);
-    h6 { font-size: .95rem; margin-bottom: .5rem; a { color: $ink; &:hover { color: $brand; } } }
-    .district { display: block; font-size: .88rem; color: $slate; padding: .15rem 0; &:hover { color: $brand; } }
-}
-// Dar masaüstünde (992-1199 px) menü sıkışmasın: bağlantılar daralır, "Ara" yalnız ikon olur.
-@include media-breakpoint-between(lg, xl) {
-    .main-nav { gap: 0; .nav-link { padding: .5rem .5rem !important; font-size: .88rem; } }
-    .brand img { height: 44px; }
-    .header-cta .btn { padding-left: 1.05rem; padding-right: 1.05rem; font-size: .88rem; }
-    .btn-call { width: 44px; height: 44px; padding: 0 !important; border-radius: 50%; .label { display: none; } }
-}
-.navbar-toggler { border: 0; font-size: 1.5rem; color: $ink; padding: .25rem .5rem; &:focus { box-shadow: none; } }
+.header-actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; } // telefonda menü düğmesi sağ kenarda
+.menu-btn { background: rgba(#fff, .14); }
 
 .mobile-nav {
-    .brand img { height: 44px; }
-    .mnav { list-style: none; padding: 0; margin: 0; }
-    .mnav > li { border-bottom: 1px solid $line; }
-    .mnav-link { display: flex; align-items: center; justify-content: space-between; padding: .9rem 0; font-weight: 600; color: $ink; }
-    .toggle-icon { font-size: .75rem; transition: transform .2s ease; }
-    [aria-expanded="true"] .toggle-icon { transform: rotate(180deg); }
-    .mnav-sub { list-style: none; padding: 0 0 .75rem .75rem; margin: 0; a { display: block; padding: .35rem 0; color: $slate; font-size: .94rem; } .sub-title a { font-weight: 700; color: $ink; margin-top: .4rem; } }
+    .offcanvas-header { border-bottom: 1px solid rgba(#fff, .12); }
+    .mobile-nav-title { font-weight: 800; font-size: 1.15rem; }
+}
+.mnav { list-style: none; margin: 0; padding: 0; }
+.mnav-link {
+    display: flex; align-items: center; gap: .85rem; padding: .9rem .25rem; color: #fff; font-weight: 600; font-size: 1.05rem;
+    border-bottom: 1px solid rgba(#fff, .08);
+    i { width: 22px; text-align: center; color: $sun; }
+    &:hover { color: $sun; }
 }
 
 // ---------------------------------------------------------------
-// Arka plan görselleri (HTML <picture>; bkz. components/bg-picture)
+// Hero kartı
 // ---------------------------------------------------------------
 .bg-picture {
     position: absolute; inset: 0; z-index: 0; display: block;
-    // Arka plan fotoğrafları biraz canlandırılır: bulutlu bir gün de solgun durmasın.
-    img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.25) contrast(1.04); }
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.hero-card {
+    position: relative; overflow: hidden; border-radius: var(--rg-radius); margin-top: 1rem; min-height: 320px;
+    display: flex; align-items: flex-end; background: $deep; color: #fff; box-shadow: var(--rg-shadow);
+    &::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba($deep, .15) 0%, rgba($deep, .35) 45%, rgba($deep, .88) 100%); }
+}
+.hero-content { position: relative; z-index: 2; padding: 1.5rem 1.35rem 1.5rem; max-width: 560px; }
+.hero-title {
+    color: #fff; font-size: 2.2rem; line-height: 1; margin-bottom: .75rem;
+    em { display: block; font-style: italic; color: $sun; font-size: 1.25em; letter-spacing: -.01em; }
+}
+.hero-text { font-size: 1rem; color: rgba(#fff, .9); margin-bottom: 1.15rem; max-width: 34ch; }
+.hero-note {
+    position: absolute; right: 1.25rem; top: 1.25rem; z-index: 2; font-size: .8rem; font-style: italic; font-weight: 600;
+    color: #fff; text-shadow: 0 2px 8px rgba($deep, .6); text-align: right; max-width: 150px;
+}
+@include media-breakpoint-up(md) {
+    .hero-card { min-height: 420px; margin-top: 1.5rem; }
+    .hero-content { padding: 2.5rem 2.25rem; }
+    .hero-title { font-size: 3rem; }
+    .hero-note { font-size: .95rem; max-width: 220px; }
 }
 
 // ---------------------------------------------------------------
-// Hero
+// Bölümler
 // ---------------------------------------------------------------
-.hero {
-    position: relative; color: #fff; padding: 7.5rem 0 9.5rem; isolation: isolate;
-    &::after {
-        content: ''; position: absolute; inset: 0; z-index: 1;
-        background: linear-gradient(100deg, rgba($ink, .80) 0%, rgba($deep, .52) 42%, rgba($brand, .08) 78%, rgba($brand, 0) 100%),
-                    linear-gradient(0deg, rgba($ink, .45) 0%, rgba($ink, 0) 34%);
-    }
-    .container { position: relative; z-index: 2; }
-    h1 { color: #fff; font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.06; margin-bottom: 1.25rem; max-width: 15ch; text-shadow: 0 2px 24px rgba($ink, .35); }
-    .lead { font-size: 1.15rem; color: rgba(#fff, .88); max-width: 56ch; margin-bottom: 1.75rem; }
+.section-block { padding-top: 2.25rem; }
+.section-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem;
+    h2 { margin: 0; display: inline-flex; align-items: center; gap: .6rem; font-size: 1.5rem;
+        i { color: $accent; font-size: .85em; } }
 }
-.hero-badge {
-    display: inline-flex; align-items: center; gap: .5rem; padding: .45rem 1rem; border-radius: 999px; font-size: .82rem; font-weight: 600;
-    background: rgba(#fff, .14); border: 1px solid rgba(#fff, .25); backdrop-filter: blur(6px); margin-bottom: 1.4rem;
-    i { color: $sun; }
-}
-.hero-bullets {
-    list-style: none; padding: 0; margin: 0 0 2rem; display: grid; gap: .55rem;
-    li { display: flex; gap: .65rem; align-items: flex-start; color: rgba(#fff, .92); }
-    i { color: $sun; margin-top: .3rem; }
-}
-.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-@include media-breakpoint-down(md) {
-    .hero { padding: 4.5rem 0 7rem; &::after { background: linear-gradient(180deg, rgba($ink, .62) 0%, rgba($deep, .66) 100%); } }
-}
-
-// Tur arama kutusu: hero'nun altına taşar
-.tour-finder {
-    position: relative; z-index: 5; margin-top: -3.75rem;
-    .finder-card {
-        background: #fff; border-radius: $border-radius-xl; box-shadow: var(--vt-shadow); padding: 1.35rem 1.5rem;
-        display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 1rem; align-items: end;
-    }
-    label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: $muted; margin-bottom: .35rem; display: block; }
-    .form-select { border: 0; background-color: $mist; font-weight: 600; color: $ink; }
-    @include media-breakpoint-down(md) { .finder-card { grid-template-columns: 1fr; } }
-}
+@include media-breakpoint-up(md) { .section-block { padding-top: 3rem; } .section-head h2 { font-size: 1.9rem; } }
 
 // ---------------------------------------------------------------
-// Güven öğeleri
+// Tur kartları
 // ---------------------------------------------------------------
-.trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
-    @include media-breakpoint-down(lg) { grid-template-columns: repeat(2, 1fr); }
-    @include media-breakpoint-down(sm) { grid-template-columns: 1fr; }
-}
-.trust-item {
-    display: flex; gap: 1rem; align-items: flex-start; padding: 1.25rem; border-radius: $border-radius-lg; background: #fff; border: 1px solid $line;
-    .icon { flex: 0 0 48px; height: 48px; border-radius: 14px; background: rgba($brand, .12); color: $brand; display: grid; place-items: center; font-size: 1.2rem; }
-    h3 { font-family: $font-family-sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: .2rem; letter-spacing: 0; }
-    p { margin: 0; font-size: .92rem; }
-    transition: transform .2s ease, box-shadow .2s ease;
-    &:hover { transform: translateY(-3px); box-shadow: var(--vt-shadow-sm); }
-}
-// Renk sırası: mavi, turuncu, turkuaz, yeşil, mor, sarı — bölümler tek renge boğulmasın.
-$vivid: ($brand, $accent, $aqua, $leaf, $violet, darken($sun, 12%));
-@each $color in $vivid {
-    $i: index($vivid, $color);
-    .trust-grid > :nth-child(6n + #{$i}) .icon,
-    .vivid-cycle > :nth-child(6n + #{$i}) .icon { background: rgba($color, .14); color: $color; }
-    .vivid-cycle > :nth-child(6n + #{$i}) .category-tile:hover .icon,
-    .vivid-cycle > :nth-child(6n + #{$i}) .category-tile:hover { border-color: $color; }
-    .vivid-cycle > :nth-child(6n + #{$i}) .category-tile:hover .icon { background: $color; color: #fff; }
-    .process-steps > :nth-child(6n + #{$i}) .icon { background: $color; box-shadow: 0 10px 22px rgba($color, .32); }
-    .process-steps > :nth-child(6n + #{$i})::before { color: rgba($color, .2); }
-}
-
-// ---------------------------------------------------------------
-// Tur kartı
-// ---------------------------------------------------------------
+.tour-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .9rem; }
 .tour-card {
-    display: flex; flex-direction: column; height: 100%; background: #fff; border-radius: $border-radius-lg; overflow: hidden;
-    border: 1px solid $line; transition: transform .25s ease, box-shadow .25s ease;
-    &:hover { transform: translateY(-6px); box-shadow: var(--vt-shadow); .tour-card-media img { transform: scale(1.06); } }
+    background: #fff; border-radius: var(--rg-radius); overflow: hidden; box-shadow: var(--rg-shadow-sm); display: flex; flex-direction: column;
+    transition: transform .2s ease, box-shadow .2s ease;
+    &:hover { transform: translateY(-3px); box-shadow: var(--rg-shadow); }
+    &.is-wide { grid-column: 1 / -1; flex-direction: row; .tour-card-media { width: 45%; aspect-ratio: auto; min-height: 150px; } .tour-card-body { flex: 1; } }
 }
 .tour-card-media {
-    position: relative; aspect-ratio: 3 / 2; overflow: hidden; display: block; background: $mist;
-    img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; filter: saturate(1.15); }
+    position: relative; display: block; aspect-ratio: 4 / 3; background: $mist; overflow: hidden;
+    img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s ease; }
+    &:hover img { transform: scale(1.04); }
 }
-.tour-card-badges { position: absolute; inset: .85rem .85rem auto .85rem; display: flex; justify-content: space-between; gap: .5rem; z-index: 2; pointer-events: none; }
 .pill {
-    display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .75rem; border-radius: 999px; font-size: .76rem; font-weight: 700;
-    background: rgba(#fff, .94); color: $ink; box-shadow: 0 4px 12px rgba($ink, .12);
-    &.pill-accent { background: linear-gradient(135deg, #ff8a3d, $accent); color: #fff; }
-    &.pill-deep { background: linear-gradient(135deg, $brand, $deep); color: #fff; }
-    i { font-size: .85em; }
+    position: absolute; top: .6rem; left: .6rem; z-index: 2; display: inline-flex; align-items: center; gap: .35rem;
+    padding: .3rem .65rem; border-radius: 999px; font-size: .7rem; font-weight: 700; color: #fff; background: $ink;
+    i { font-size: .8em; }
 }
-.tour-card-body { padding: 1.35rem 1.35rem 1.1rem; display: flex; flex-direction: column; flex: 1; }
-.tour-card-category { font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: $brand; margin-bottom: .4rem; display: inline-block; &:hover { color: $accent; } }
-.tour-card h3 { font-size: 1.3rem; margin-bottom: .5rem; a { color: $ink; &:hover { color: $brand; } } }
-.tour-card p { font-size: .94rem; margin-bottom: 1rem; }
-.tour-card-meta {
-    list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .86rem; color: $slate;
-    i { color: $brand; margin-right: .35rem; }
+.pill-badge { background: $ink; i { color: $sun; } }
+.pill-sun { background: $sun; color: $ink; }
+.pill-full { left: auto; right: .6rem; background: $accent; }
+.tour-card-body { padding: .85rem .9rem 1rem; display: flex; flex-direction: column; flex: 1; }
+.tour-card h3 { font-size: 1.05rem; margin-bottom: .3rem; a { color: $ink; &:hover { color: $brand; } } }
+.tour-card p { font-size: .8rem; color: $muted; margin-bottom: .75rem; line-height: 1.45; }
+.tour-card-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.date-chip {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .6rem; border-radius: .6rem; background: $mist; color: $ink;
+    font-size: .72rem; font-weight: 700; white-space: nowrap; i { color: $brand; }
 }
-.tour-card-footer { margin-top: auto; padding-top: 1rem; border-top: 1px dashed $line; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
-.price {
-    line-height: 1.1;
-    .from { display: block; font-size: .72rem; font-weight: 600; color: $muted; text-transform: uppercase; letter-spacing: .08em; }
-    .old { font-size: .88rem; color: $muted; text-decoration: line-through; margin-right: .35rem; }
-    .now { font-family: $headings-font-family; font-size: 1.55rem; font-weight: 700; color: $ink; }
-    &.price-lg .now { font-size: 2.2rem; }
+.price-btn {
+    display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: 999px; background: $sun; color: $ink;
+    font-weight: 800; font-size: .85rem; white-space: nowrap; transition: transform .2s ease, background .2s ease;
+    i { font-size: .8em; }
+    &:hover { background: $sun-dark; color: $ink; transform: translateX(2px); }
+}
+@include media-breakpoint-up(md) {
+    .tour-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    // Geniş kart yalnız telefonda (iki sütunlu düzeni kırar); masaüstünde bütün kartlar eşit.
+    .tour-card.is-wide { grid-column: auto; flex-direction: column; .tour-card-media { width: auto; aspect-ratio: 4 / 3; min-height: 0; } }
+    .tour-card h3 { font-size: 1.2rem; }
+    .tour-card p { font-size: .9rem; }
+    .price-btn { font-size: .95rem; padding: .55rem 1rem; }
+    .date-chip { font-size: .8rem; }
+}
+
+.empty-state {
+    text-align: center; padding: 2.5rem 1.5rem; border: 1px dashed $line; border-radius: var(--rg-radius); background: #fff;
+    i { font-size: 2rem; color: $brand; margin-bottom: .75rem; display: block; }
+    p { margin-bottom: 1rem; }
 }
 
 // ---------------------------------------------------------------
-// Kategori kutuları
+// Öne çıkanlar şeridi
 // ---------------------------------------------------------------
-.category-tile {
-    display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.35rem; border-radius: $border-radius-lg; background: #fff; border: 1px solid $line; height: 100%;
-    color: $ink; transition: all .25s ease;
-    .icon { flex: 0 0 56px; height: 56px; border-radius: 18px; background: rgba($brand, .14); color: $brand; display: grid; place-items: center; font-size: 1.35rem; transition: all .25s ease; }
-    strong { display: block; font-size: 1.05rem; }
-    small { color: $muted; }
-    .arrow { margin-left: auto; color: $muted; transition: transform .2s ease, color .2s ease; }
-    &:hover { border-color: $brand; box-shadow: var(--vt-shadow-sm); color: $ink; .icon { background: $brand; color: #fff; } .arrow { transform: translateX(4px); color: $accent; } }
+.feature-strip {
+    margin-top: 1.5rem; background: #fff; border-radius: var(--rg-radius); box-shadow: var(--rg-shadow-sm);
+    display: grid; grid-template-columns: repeat(2, 1fr);
+}
+.feature {
+    display: flex; align-items: center; gap: .65rem; padding: .9rem .85rem;
+    &:nth-child(odd) { border-right: 1px solid $line; }
+    &:nth-child(-n+2) { border-bottom: 1px solid $line; }
+}
+.feature-icon { width: 38px; height: 38px; border-radius: .75rem; background: rgba($sun, .18); color: $accent; display: grid; place-items: center; font-size: 1.05rem; flex-shrink: 0; }
+.feature-body { display: flex; flex-direction: column; line-height: 1.2; strong { font-size: .82rem; color: $ink; } small { font-size: .7rem; color: $muted; } }
+@include media-breakpoint-up(md) {
+    .feature-strip { grid-template-columns: repeat(4, 1fr); margin-top: 2.25rem; }
+    .feature { padding: 1.15rem 1.1rem; border-bottom: 0 !important; &:not(:last-child) { border-right: 1px solid $line; } }
+    .feature-body strong { font-size: .95rem; } .feature-body small { font-size: .8rem; }
 }
 
 // ---------------------------------------------------------------
-// Yaklaşan seferler
+// Instagram bandı
 // ---------------------------------------------------------------
-.departure-list { display: grid; gap: .85rem; }
-.departure-row {
-    display: grid; grid-template-columns: 84px 1fr auto auto auto; gap: 1.25rem; align-items: center;
-    background: #fff; border: 1px solid $line; border-radius: $border-radius-lg; padding: .9rem 1.25rem .9rem .9rem; transition: all .2s ease;
-    &:hover { border-color: rgba($brand, .45); box-shadow: var(--vt-shadow-sm); }
-    .dep-title { font-weight: 700; color: $ink; font-size: 1.05rem; display: block; line-height: 1.3; &:hover { color: $brand; } }
-    .dep-sub { font-size: .87rem; color: $muted; i { color: $brand; margin-right: .3rem; } span + span { margin-left: .9rem; } }
-    .dep-price { text-align: right; white-space: nowrap; }
-    @include media-breakpoint-down(lg) {
-        grid-template-columns: 72px 1fr auto; row-gap: .6rem;
-        .dep-seats { grid-column: 2 / 3; }
-        .dep-price { grid-column: 3 / 4; grid-row: 1 / 2; }
-        .dep-action { grid-column: 1 / -1; .btn { width: 100%; } }
-    }
-    &.is-full { opacity: .72; }
+.insta-band {
+    margin-top: 1rem; display: flex; align-items: center; gap: .85rem; padding: 1rem 1.1rem; border-radius: var(--rg-radius); color: #fff;
+    background: linear-gradient(90deg, #f9ce34 0%, #ee2a7b 50%, #6228d7 100%); box-shadow: var(--rg-shadow-sm);
+    &:hover { color: #fff; filter: brightness(1.04); .insta-arrow { transform: translateX(4px); } }
 }
-.date-block {
-    width: 84px; border-radius: 14px; background: linear-gradient(160deg, $brand 0%, $deep 100%); color: #fff; text-align: center; padding: .55rem .25rem; line-height: 1.1; box-shadow: 0 8px 18px rgba($deep, .25);
-    .day { font-family: $headings-font-family; font-size: 1.75rem; font-weight: 700; display: block; }
-    .month { font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: $sun; display: block; }
-    .weekday { font-size: .7rem; color: rgba(#fff, .7); display: block; margin-top: .15rem; }
-    @include media-breakpoint-down(lg) { width: 72px; .day { font-size: 1.45rem; } }
-}
-.seat-badge {
-    display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap;
-    background: rgba($success, .12); color: darken($success, 8%);
-    &.is-low { background: rgba($sun, .22); color: #8a5a00; }
-    &.is-full { background: rgba($danger, .12); color: $danger; }
-}
-.calendar-month { margin-bottom: 3rem;
-    h2 { font-size: 1.5rem; margin-bottom: 1.1rem; display: flex; align-items: center; gap: .6rem; small { font-family: $font-family-sans-serif; font-size: .85rem; font-weight: 600; color: $muted; } }
-}
+.insta-icon { width: 42px; height: 42px; border-radius: 50%; border: 2px solid rgba(#fff, .8); display: grid; place-items: center; font-size: 1.35rem; flex-shrink: 0; }
+.insta-text { font-size: .95rem; strong { font-weight: 800; letter-spacing: .04em; } }
+.insta-arrow { margin-left: auto; transition: transform .2s ease; }
+@include media-breakpoint-up(md) { .insta-band { margin-top: 1.5rem; padding: 1.25rem 1.5rem; } .insta-text { font-size: 1.1rem; } }
 
 // ---------------------------------------------------------------
-// Hakkımızda / içerik
+// Tur detay penceresi
 // ---------------------------------------------------------------
-.about-images {
-    position: relative; padding: 0 3rem 3rem 0;
-    .img-main { border-radius: $border-radius-xl; overflow: hidden; aspect-ratio: 4 / 5; img { width: 100%; height: 100%; object-fit: cover; } }
-    .img-float { position: absolute; right: 0; bottom: 0; width: 52%; border-radius: $border-radius-lg; overflow: hidden; border: 6px solid #fff; box-shadow: var(--vt-shadow); aspect-ratio: 4 / 3; img { width: 100%; height: 100%; object-fit: cover; } }
-    @include media-breakpoint-down(md) { padding: 0 1.5rem 2rem 0; }
+.tour-modal {
+    .modal-content { overflow: hidden; }
+    .modal-body { padding: 1.25rem; }
+    .modal-title { font-size: 1.4rem; margin-bottom: .6rem; }
+    .modal-footer { border-top: 1px solid $line; gap: .5rem; padding: 1rem 1.25rem; }
+    .btn-close { position: absolute; top: .85rem; right: .85rem; z-index: 3; background-color: rgba($deep, .45); border-radius: 50%; padding: .65rem; opacity: 1; }
 }
-.check-list {
-    list-style: none; padding: 0; margin: 0; display: grid; gap: .6rem;
-    li { display: flex; gap: .7rem; align-items: flex-start; }
-    i { color: $brand; margin-top: .3rem; flex: 0 0 auto; }
-    &.two-col { grid-template-columns: repeat(2, 1fr); @include media-breakpoint-down(sm) { grid-template-columns: 1fr; } }
-    &.is-excluded i { color: $danger; }
-}
-.content-prose {
-    font-size: 1.03rem;
-    h2 { font-size: 1.6rem; margin: 2.25rem 0 .9rem; }
-    h3 { font-size: 1.25rem; margin: 1.75rem 0 .7rem; }
-    p { margin-bottom: 1.1rem; }
-    ul, ol { margin-bottom: 1.25rem; padding-left: 1.25rem; li { margin-bottom: .4rem; } }
-    a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba($brand, .4); }
-    a.internal-link { font-weight: 600; }
-    table { width: 100%; margin-bottom: 1.5rem; border-collapse: collapse; th, td { border: 1px solid $line; padding: .6rem .8rem; } th { background: $mist; color: $ink; } }
-    img { border-radius: $border-radius-lg; margin: 1rem 0; }
-    > :first-child { margin-top: 0; }
-}
-.feature-row {
-    display: flex; gap: 1rem; align-items: flex-start;
-    .icon { flex: 0 0 46px; height: 46px; border-radius: 50%; background: #fff; border: 1px solid $line; color: $accent; display: grid; place-items: center; }
-    h3 { font-family: $font-family-sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: .15rem; letter-spacing: 0; }
-    p { margin: 0; font-size: .93rem; }
-}
-
-// ---------------------------------------------------------------
-// Sayaç bandı
-// ---------------------------------------------------------------
-.stats-band {
-    position: relative; isolation: isolate; color: #fff; padding: 4.5rem 0;
-    &::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(100deg, rgba($deep, .90) 0%, rgba($brand, .80) 55%, rgba($aqua, .78) 100%); }
-    .container { position: relative; z-index: 2; }
-    .stat { text-align: center; }
-    .stat .value { font-family: $headings-font-family; font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 700; line-height: 1; color: #fff; }
-    .stat .label { margin-top: .5rem; font-size: .9rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(#fff, .78); }
-}
-
-// ---------------------------------------------------------------
-// Süreç
-// ---------------------------------------------------------------
-.process-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; counter-reset: step;
-    @include media-breakpoint-down(lg) { grid-template-columns: repeat(2, 1fr); }
-    @include media-breakpoint-down(sm) { grid-template-columns: 1fr; }
-}
-.process-step {
-    position: relative; background: #fff; border-radius: $border-radius-lg; padding: 2rem 1.5rem 1.6rem; border: 1px solid $line; counter-increment: step;
-    &::before { content: '0' counter(step); position: absolute; top: 1rem; right: 1.25rem; font-family: $headings-font-family; font-size: 2.4rem; font-weight: 700; color: rgba($brand, .14); line-height: 1; }
-    .icon { width: 54px; height: 54px; border-radius: 16px; background: $accent; color: #fff; display: grid; place-items: center; font-size: 1.25rem; margin-bottom: 1.1rem; box-shadow: 0 10px 22px rgba($accent, .3); }
-    h3 { font-family: $font-family-sans-serif; font-size: 1.08rem; font-weight: 700; letter-spacing: 0; margin-bottom: .4rem; }
-    p { margin: 0; font-size: .93rem; }
-}
-
-// ---------------------------------------------------------------
-// Galeri
-// ---------------------------------------------------------------
-.gallery-filters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-bottom: 2rem; }
-.filter-btn {
-    border: 1px solid $line; background: #fff; color: $ink; font-weight: 600; font-size: .9rem; padding: .5rem 1.1rem; border-radius: 999px; transition: all .2s ease;
-    &:hover { border-color: $brand; color: $brand; }
-    &.active { background: $brand; border-color: $brand; color: #fff; }
-}
-a.filter-btn { display: inline-flex; align-items: center; gap: .4rem; }
-.gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
-    @include media-breakpoint-down(lg) { grid-template-columns: repeat(3, 1fr); }
-    @include media-breakpoint-down(md) { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
-}
-.gallery-item {
-    position: relative; display: block; border-radius: $border-radius-lg; overflow: hidden; aspect-ratio: 4 / 3; background: $mist; cursor: zoom-in;
-    img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
-    .caption { position: absolute; inset: auto 0 0 0; padding: 2rem 1rem .85rem; color: #fff; font-size: .88rem; font-weight: 600; background: linear-gradient(0deg, rgba($ink, .82), rgba($ink, 0)); opacity: 0; transform: translateY(8px); transition: all .3s ease; }
-    &:hover { img { transform: scale(1.07); } .caption { opacity: 1; transform: none; } }
-    &.is-hidden { display: none; }
-    &.is-wide { grid-column: span 2; aspect-ratio: 8 / 3; @include media-breakpoint-down(md) { grid-column: span 2; aspect-ratio: 2 / 1; } }
-}
-.lightbox { position: fixed; inset: 0; z-index: 2000; background: rgba($ink, .95); display: none; align-items: center; justify-content: center; padding: 2rem;
-    &.open { display: flex; }
-    img { max-width: 100%; max-height: 86vh; border-radius: $border-radius; }
-    .lb-btn { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 0; background: rgba(#fff, .12); color: #fff; font-size: 1.1rem; &:hover { background: $accent; } }
-    .lb-close { top: 1.25rem; right: 1.25rem; }
-    .lb-prev { left: 1.25rem; top: 50%; transform: translateY(-50%); }
-    .lb-next { right: 1.25rem; top: 50%; transform: translateY(-50%); }
-    .lb-caption { position: absolute; bottom: 1.25rem; left: 0; right: 0; text-align: center; color: rgba(#fff, .85); font-size: .95rem; }
-}
-
-// ---------------------------------------------------------------
-// Yorumlar
-// ---------------------------------------------------------------
-.testimonial-card {
-    background: #fff; border-radius: $border-radius-lg; padding: 1.75rem; height: 100%; border: 1px solid $line; position: relative;
-    .stars { color: $sun; font-size: .9rem; margin-bottom: .8rem; }
-    blockquote { margin: 0 0 1.1rem; font-size: 1rem; color: $ink; }
-    .author { font-weight: 700; color: $ink; font-size: .95rem; small { display: block; font-weight: 500; color: $muted; } }
-    &::after { content: '\201D'; position: absolute; top: .4rem; right: 1.25rem; font-family: $headings-font-family; font-size: 4.5rem; line-height: 1; color: rgba($brand, .14); }
-}
-
-// ---------------------------------------------------------------
-// Bölge kartları / chip'ler
-// ---------------------------------------------------------------
-.region-card {
-    background: #fff; border-radius: $border-radius-lg; border: 1px solid $line; padding: 1.6rem; height: 100%; transition: all .25s ease;
-    &:hover { border-color: rgba($brand, .45); box-shadow: var(--vt-shadow-sm); }
-    h3 { font-size: 1.35rem; margin-bottom: .35rem; a { color: $ink; &:hover { color: $brand; } } }
-    .count { font-size: .82rem; font-weight: 700; color: $accent; text-transform: uppercase; letter-spacing: .08em; }
-    p { font-size: .93rem; margin: .6rem 0 1rem; }
-}
-.chips { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; padding: 0; margin: 0; }
-.chip {
-    display: inline-flex; align-items: center; gap: .35rem; padding: .32rem .8rem; border-radius: 999px; font-size: .84rem; font-weight: 500;
-    background: $mist; color: $ink; border: 1px solid transparent; transition: all .2s ease;
-    i { color: $brand; font-size: .8em; }
-}
-a.chip:hover { background: #fff; border-color: $brand; color: $brand; }
-
-// ---------------------------------------------------------------
-// SSS
-// ---------------------------------------------------------------
-.faq-accordion {
-    .accordion-item { border: 0; border-bottom: 1px solid $line; background: transparent; }
-    .accordion-button { font-weight: 700; color: $ink; font-size: 1.03rem; background: transparent; box-shadow: none;
-        &::after { background-image: none; content: '\2b'; font-family: 'Font Awesome 7 Free'; font-weight: 900; width: 34px; height: 34px; border-radius: 50%; background-color: $mist; color: $brand; display: grid; place-items: center; transform: none; font-size: .8rem; flex: 0 0 34px; }
-        &:not(.collapsed)::after { content: '\f068'; background-color: $brand; color: #fff; }
-    }
-    .accordion-body { padding-top: 0; padding-bottom: 1.35rem; max-width: 70ch; }
-}
-
-// ---------------------------------------------------------------
-// CTA bandı
-// ---------------------------------------------------------------
-.cta-band {
-    position: relative; isolation: isolate; color: #fff; padding: 5rem 0; text-align: center;
-    &::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(135deg, rgba($deep, .86) 0%, rgba($brand, .70) 60%, rgba($aqua, .62) 100%); }
-    .container { position: relative; z-index: 2; }
-    h2 { color: #fff; font-size: clamp(1.9rem, 3.6vw, 2.8rem); margin-bottom: .75rem; }
-    p { color: rgba(#fff, .85); font-size: 1.1rem; max-width: 60ch; margin: 0 auto 2rem; }
-    .cta-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
-}
-
-// ---------------------------------------------------------------
-// İç sayfa başlığı
-// ---------------------------------------------------------------
-.page-banner {
-    position: relative; isolation: isolate; color: #fff; padding: 4.25rem 0 3.75rem;
-    &::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(100deg, rgba($ink, .84) 0%, rgba($deep, .66) 50%, rgba($brand, .38) 100%); }
-    .container { position: relative; z-index: 2; }
-    h1 { color: #fff; font-size: clamp(1.9rem, 4vw, 3rem); margin: 0; max-width: 24ch; }
-    .lead { color: rgba(#fff, .85); margin: .9rem 0 0; max-width: 62ch; font-size: 1.08rem; }
-    .breadcrumb { margin-bottom: 1rem; font-size: .88rem; a { color: rgba(#fff, .8); &:hover { color: $sun; } } }
-    .banner-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; }
-}
-
-// ---------------------------------------------------------------
-// Tur detayı
-// ---------------------------------------------------------------
-.tour-hero-image { border-radius: $border-radius-xl; overflow: hidden; aspect-ratio: 16 / 9; background: $mist; img { width: 100%; height: 100%; object-fit: cover; } }
-.tour-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; margin-top: .6rem; .gallery-item { aspect-ratio: 3 / 2; border-radius: $border-radius; } }
+.tour-modal-media { position: relative; aspect-ratio: 16 / 10; background: $mist; img { width: 100%; height: 100%; object-fit: cover; display: block; } }
 .tour-facts {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: $line; border: 1px solid $line; border-radius: $border-radius-lg; overflow: hidden; margin: 1.75rem 0;
-    @include media-breakpoint-down(md) { grid-template-columns: repeat(2, 1fr); }
-    .fact { background: #fff; padding: 1.1rem 1.2rem; display: flex; gap: .8rem; align-items: flex-start; }
-    .fact i { color: $accent; font-size: 1.15rem; margin-top: .2rem; width: 1.25rem; text-align: center; }
-    .fact small { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: $muted; }
-    .fact strong { display: block; color: $ink; font-size: .95rem; line-height: 1.35; }
+    list-style: none; padding: 0; margin: 0 0 .9rem; display: flex; flex-wrap: wrap; gap: .5rem;
+    li { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .65rem; border-radius: .6rem; background: $mist; font-size: .8rem; font-weight: 600; color: $ink; i { color: $brand; } }
 }
-.itinerary { position: relative; padding-left: 2.25rem; margin: 0; list-style: none;
-    &::before { content: ''; position: absolute; left: .7rem; top: .5rem; bottom: .5rem; width: 2px; background: repeating-linear-gradient(180deg, rgba($brand, .45) 0 6px, transparent 6px 12px); }
-}
-.itinerary-day {
-    position: relative; padding-bottom: 1.6rem;
-    &:last-child { padding-bottom: 0; }
-    &::before { content: ''; position: absolute; left: -2.25rem; top: .25rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #fff; border: 4px solid $brand; box-shadow: 0 0 0 4px #fff; }
-    h3 { font-family: $font-family-sans-serif; font-size: 1.08rem; font-weight: 700; letter-spacing: 0; margin-bottom: .3rem; }
-    p { margin: 0; }
-}
-.incl-box { border-radius: $border-radius-lg; padding: 1.5rem; height: 100%; border: 1px solid $line;
-    h3 { font-family: $font-family-sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
-    &.is-included { background: rgba($success, .05); border-color: rgba($success, .25); h3 i { color: $success; } .check-list i { color: $success; } }
-    &.is-excluded { background: rgba($danger, .04); border-color: rgba($danger, .2); h3 i { color: $danger; } }
-    .check-list { font-size: .95rem; }
-}
-.booking-card {
-    background: #fff; border-radius: $border-radius-lg; border: 1px solid $line; box-shadow: var(--vt-shadow); overflow: hidden;
-    .booking-head { background: linear-gradient(135deg, $brand 0%, $deep 100%); color: #fff; padding: 1.35rem 1.5rem; .price .from { color: rgba(#fff, .7); } .price .now { color: #fff; } .price .old { color: rgba(#fff, .6); } .note { font-size: .82rem; color: rgba(#fff, .75); margin: .5rem 0 0; } }
-    .booking-body { padding: 1.35rem 1.5rem 1.5rem; }
-    h3 { font-family: $font-family-sans-serif; font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: $muted; margin-bottom: .8rem; }
-}
-.departure-pick { display: grid; gap: .5rem; margin-bottom: 1.25rem; max-height: 320px; overflow-y: auto; padding-right: .15rem; }
-.departure-option {
-    display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem .9rem; border-radius: $border-radius; border: 1px solid $line; color: $ink; transition: all .2s ease;
-    .d-date { font-weight: 700; display: block; line-height: 1.25; }
-    .d-sub { font-size: .8rem; color: $muted; display: block; }
-    .d-price { font-weight: 700; white-space: nowrap; color: $brand; }
-    &:hover { border-color: $brand; background: rgba($brand, .04); color: $ink; }
-    &.is-full { opacity: .6; pointer-events: none; }
+.lead-text { font-weight: 600; color: $ink; }
+.content-prose {
+    font-size: .95rem;
+    p:last-child { margin-bottom: 0; }
+    ul, ol { padding-left: 1.2rem; }
+    h2, h3, h4 { font-size: 1.05rem; margin-top: 1rem; }
 }
 
 // ---------------------------------------------------------------
-// Kenar çubuğu
+// İç sayfalar: iletişim, iş başvurusu, teşekkür
 // ---------------------------------------------------------------
-.sidebar { position: sticky; top: calc(var(--vt-header-h) + 1.25rem); display: grid; gap: 1.5rem; }
-.sidebar-widget { background: #fff; border: 1px solid $line; border-radius: $border-radius-lg; padding: 1.5rem;
-    h3, h4 { font-family: $font-family-sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0; margin-bottom: 1rem; }
-    .side-links { list-style: none; padding: 0; margin: 0; li + li { border-top: 1px solid $line; } a { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .6rem 0; color: $ink; font-weight: 500; font-size: .95rem; &:hover { color: $brand; } small { color: $muted; white-space: nowrap; } } }
-    &.is-dark { background: linear-gradient(150deg, $brand 0%, $deep 100%); border-color: transparent; color: rgba(#fff, .9); h3, h4 { color: #fff; } }
-}
+.page-head { padding: 1.75rem 0 .5rem; h1 { font-size: 1.9rem; margin-bottom: .35rem; } p { margin-bottom: 0; max-width: 60ch; } }
+@include media-breakpoint-up(md) { .page-head { padding-top: 2.5rem; } .page-head h1 { font-size: 2.4rem; } }
 
-// ---------------------------------------------------------------
-// Form
-// ---------------------------------------------------------------
-.form-card { background: #fff; border-radius: $border-radius-xl; box-shadow: var(--vt-shadow); padding: 2.25rem; border: 1px solid $line;
-    @include media-breakpoint-down(md) { padding: 1.5rem; }
-    h3 { margin-bottom: .35rem; }
+.contact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-top: 1.25rem; }
+.contact-tile {
+    display: flex; align-items: center; gap: .75rem; padding: .9rem; background: #fff; border-radius: var(--rg-radius); box-shadow: var(--rg-shadow-sm); color: $ink;
+    transition: transform .2s ease;
+    min-width: 0;
+    strong { display: block; font-size: .9rem; } small { display: block; color: $muted; font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    span:last-child { min-width: 0; flex: 1; }
+    &:hover { transform: translateY(-2px); color: $ink; }
 }
+.tile-icon { width: 42px; height: 42px; border-radius: .85rem; background: rgba($brand, .12); color: $brand; display: grid; place-items: center; font-size: 1.2rem; flex-shrink: 0;
+    &.is-wa { background: rgba($whatsapp, .14); color: darken($whatsapp, 8%); }
+    &.is-ig { background: linear-gradient(135deg, #f9ce34, #ee2a7b, #6228d7); color: #fff; }
+}
+@include media-breakpoint-up(md) { .contact-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.form-card { background: #fff; border-radius: var(--rg-radius); box-shadow: var(--rg-shadow-sm); padding: 1.25rem; }
+@include media-breakpoint-up(md) { .form-card { padding: 2rem; } }
 .form-label.required::after { content: ' *'; color: $accent; }
 .recaptcha-notice { font-size: .78rem; color: $muted; margin: 0; a { color: inherit; text-decoration: underline; } }
 .grecaptcha-badge { visibility: hidden; }
+.alert { border-radius: $border-radius; }
+.map-embed { border-radius: var(--rg-radius); overflow: hidden; border: 1px solid $line; iframe { width: 100%; height: 320px; border: 0; display: block; } }
 
-.contact-box { display: flex; gap: 1rem; align-items: flex-start; padding: 1.5rem; background: #fff; border: 1px solid $line; border-radius: $border-radius-lg; height: 100%;
-    .icon { flex: 0 0 52px; height: 52px; border-radius: 16px; background: rgba($brand, .1); color: $brand; display: grid; place-items: center; font-size: 1.25rem; }
-    h3 { font-family: $font-family-sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0; margin-bottom: .25rem; }
-    p, a { margin: 0; color: $slate; } a:hover { color: $brand; }
-}
-.map-embed { border-radius: $border-radius-lg; overflow: hidden; border: 1px solid $line; iframe { width: 100%; height: 380px; border: 0; display: block; } }
-
-// ---------------------------------------------------------------
-// Blog
-// ---------------------------------------------------------------
-.post-card { background: #fff; border: 1px solid $line; border-radius: $border-radius-lg; overflow: hidden; height: 100%; display: flex; flex-direction: column; transition: all .25s ease;
-    &:hover { box-shadow: var(--vt-shadow-sm); transform: translateY(-4px); }
-    .media { aspect-ratio: 16 / 10; background: linear-gradient(135deg, rgba($brand, .16), rgba($accent, .16)); display: grid; place-items: center; color: $brand; font-size: 2rem; overflow: hidden; img { width: 100%; height: 100%; object-fit: cover; } }
-    .body { padding: 1.35rem; display: flex; flex-direction: column; flex: 1; }
-    .meta { font-size: .8rem; color: $muted; margin-bottom: .5rem; a { color: $brand; font-weight: 700; } }
-    h2, h3 { font-size: 1.2rem; margin-bottom: .5rem; a { color: $ink; &:hover { color: $brand; } } }
-    p { font-size: .93rem; margin-bottom: 1rem; }
-    .link-arrow { margin-top: auto; }
-}
+.thanks { text-align: center; padding: 3.5rem 1rem 2rem; max-width: 560px; margin: 0 auto; h1 { font-size: 1.8rem; } p { margin-bottom: 1.5rem; } }
+.thanks-icon { width: 88px; height: 88px; border-radius: 50%; background: rgba($success, .14); color: $success; display: grid; place-items: center; font-size: 2.5rem; margin: 0 auto 1.25rem; }
+.error-code { font-size: 6rem; line-height: 1; color: $sun; font-weight: 800; }
 
 // ---------------------------------------------------------------
 // Footer
 // ---------------------------------------------------------------
-.footer { background: linear-gradient(180deg, #0d2b55 0%, $ink 100%); color: rgba(#fff, .76); font-size: .95rem; padding-top: 4.5rem; position: relative;
-    &::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, $aqua, $brand, $accent, $sun); }
-    h4 { color: #fff; font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.25rem; }
-    a { color: rgba(#fff, .72); &:hover { color: $sun; } }
-    .footer-brand img { height: 52px; width: auto; margin-bottom: 1.25rem; }
-    .footer-links { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; }
-    .footer-contact { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; li { display: flex; gap: .75rem; align-items: flex-start; } i { color: $sun; margin-top: .3rem; width: 1rem; text-align: center; } }
-    .footer-social { display: flex; gap: .6rem; margin-top: 1.25rem; a { width: 40px; height: 40px; border-radius: 50%; background: rgba(#fff, .08); display: grid; place-items: center; color: #fff; &:hover { background: $accent; color: #fff; } } }
-    .license { margin-top: 1.25rem; padding: .85rem 1rem; border-radius: $border-radius; background: rgba(#fff, .06); font-size: .85rem; strong { color: #fff; } }
-    .footer-bottom { margin-top: 3.5rem; padding: 1.4rem 0; border-top: 1px solid rgba(#fff, .1); font-size: .86rem; }
+.footer { background: $ink; color: rgba(#fff, .78); font-size: .92rem; padding: 2.5rem 0 1.5rem; margin-top: 2rem;
+    h4 { color: #fff; font-size: .95rem; margin-bottom: .75rem; }
+    a { color: rgba(#fff, .85); &:hover { color: $sun; } }
 }
+.footer-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+@include media-breakpoint-up(md) { .footer-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem; } }
+.footer-brand { font-weight: 800; font-size: 1.3rem; color: #fff; }
+.footer-tagline { color: rgba(#fff, .6); font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .75rem; }
+.footer-instagram { display: inline-flex; align-items: center; gap: .45rem; font-weight: 700; }
+.footer-links, .footer-contact { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.footer-contact li { display: flex; align-items: flex-start; gap: .6rem; i { color: $sun; margin-top: .3rem; width: 16px; text-align: center; } }
+.footer-bottom { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid rgba(#fff, .12); display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; font-size: .78rem; color: rgba(#fff, .55); }
 
 // ---------------------------------------------------------------
-// Sabit WhatsApp düğmesi + mobil alt bar
+// Yüzen WhatsApp
 // ---------------------------------------------------------------
 .wa-float {
-    position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 1040; width: 58px; height: 58px; border-radius: 50%; background: $whatsapp; color: #fff;
-    display: grid; place-items: center; font-size: 1.75rem; box-shadow: 0 12px 28px rgba($whatsapp, .45); transition: transform .2s ease;
-    &:hover { color: #fff; transform: scale(1.08); }
-    @include media-breakpoint-down(lg) { display: none; }
-}
-.mobile-cta-bar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1040; display: none; background: #fff; box-shadow: 0 -8px 24px rgba($ink, .12);
-    padding-bottom: env(safe-area-inset-bottom);
-    a { flex: 1; text-align: center; padding: .7rem .25rem; font-size: .8rem; font-weight: 700; color: $ink; display: flex; flex-direction: column; gap: .15rem; align-items: center; i { font-size: 1.1rem; } }
-    .is-call i { color: $brand; } .is-wa i { color: $whatsapp; }
-    .is-book { background: $accent; color: #fff; }
-    @include media-breakpoint-down(lg) { display: flex; }
-}
-@include media-breakpoint-down(lg) { body { padding-bottom: 62px; } }
-.back-to-top { position: fixed; left: 1.25rem; bottom: 1.25rem; z-index: 1040; width: 44px; height: 44px; border-radius: 50%; background: $brand; color: #fff; display: grid; place-items: center; opacity: 0; visibility: hidden; transition: all .3s; border: 0;
-    &.show { opacity: 1; visibility: visible; }
-    &:hover { background: $accent; }
-    @include media-breakpoint-down(lg) { bottom: 74px; }
+    position: fixed; right: 1rem; bottom: 1rem; z-index: 1040; width: 54px; height: 54px; border-radius: 50%; background: $whatsapp; color: #fff;
+    display: grid; place-items: center; font-size: 1.7rem; box-shadow: 0 10px 24px rgba($whatsapp, .4);
+    &:hover { color: #fff; background: $whatsapp-dark; }
 }
 
 // ---------------------------------------------------------------
-// Personel kartları (ön yüz)
+// Hareket
 // ---------------------------------------------------------------
-.staff-card {
-    background: #fff; border: 1px solid $line; border-radius: $border-radius-lg; padding: 1.5rem; text-align: center; height: 100%;
-    .avatar { width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 1rem; overflow: hidden; background: linear-gradient(135deg, $aqua, $brand); color: #fff; display: grid; place-items: center; font-family: $headings-font-family; font-size: 1.8rem; font-weight: 700; img { width: 100%; height: 100%; object-fit: cover; } }
-    h3 { font-family: $font-family-sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0; margin-bottom: .15rem; }
-    .title { font-size: .85rem; color: $accent; font-weight: 600; margin-bottom: .6rem; }
-    .bio { font-size: .9rem; margin-bottom: 1rem; }
-    .actions { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
-}
-
-// ---------------------------------------------------------------
-// Diğer
-// ---------------------------------------------------------------
-.alert { border-radius: $border-radius; }
-.alert-success { border-left: 4px solid $success; }
-.thanks-icon { width: 96px; height: 96px; border-radius: 50%; background: rgba($success, .14); color: $success; display: grid; place-items: center; font-size: 2.75rem; margin: 0 auto 1.5rem; }
-.error-code { font-family: $headings-font-family; font-size: 7rem; line-height: 1; color: $accent; font-weight: 700; }
-.empty-state { text-align: center; padding: 3rem 1.5rem; border: 1px dashed $line; border-radius: $border-radius-lg; background: #fff; i { font-size: 2rem; color: $brand; margin-bottom: .75rem; display: block; } }
-.reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; &.in { opacity: 1; transform: none; } }
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; &.in { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
-    .tour-card, .tour-card-media img, .gallery-item img, .btn { transition: none; }
     .btn-call i { animation: none; }
+    html { scroll-behavior: auto; }
 }

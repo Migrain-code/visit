@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     @php
         $pageTitle = seo_title($metaTitle ?? null);
         $pageDescription = $metaDescription ?? setting('meta_description');
@@ -21,11 +21,11 @@
     <meta property="og:image" content="{{ $pageImage }}">
     <meta property="og:locale" content="tr_TR">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#0a3d91">
+    <meta name="theme-color" content="#0d2544">
     @if (setting('google_site_verification'))
         <meta name="google-site-verification" content="{{ setting('google_site_verification') }}">
     @endif
-    <link rel="icon" href="{{ asset('images/brand/logo-mark.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ versioned_asset('images/brand/logo-mark.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     {{-- Yazı tipleri app.scss içinde, kendi sunucumuzdan: Google Fonts bağlantısı yok. --}}
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
@@ -35,16 +35,20 @@
     --}}
     <link rel="stylesheet" href="{{ \Illuminate\Support\Facades\Vite::asset('resources/scss/icons.scss') }}" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="{{ \Illuminate\Support\Facades\Vite::asset('resources/scss/icons.scss') }}"></noscript>
-    @foreach (($jsonLd ?? []) as $schema)
-        <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
-    @endforeach
+    <script type="application/ld+json">{!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => site_name(),
+        'url' => url('/'),
+        'telephone' => site_phone() ?: null,
+        'sameAs' => array_values(array_filter([instagram_url()])),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
     @if ($gaId = setting('google_analytics_id'))
         {{--
             Google Analytics ERTELENİR. gtag.js ~167 KB'tır ve açılışta ~230 ms işlemci harcar
             (PageSpeed: TBT). Komutlar hemen kuyruğa yazılır; betik ziyaretçinin ilk
             etkileşiminde (kaydırma, dokunma, tuş) ya da sayfa yüklendikten 3,5 sn sonra iner
-            ve kuyruktaki sayfa görüntülemeyi gönderir. Hiç etkileşmeden 3,5 sn içinde çıkan
-            ziyaretçi sayılmayabilir; bu bilinçli bir ödünleşimdir.
+            ve kuyruktaki sayfa görüntülemeyi gönderir.
         --}}
         <script>
             window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', @json($gaId));
@@ -63,15 +67,14 @@
     @endif
     {{--
         E-postalar <!--email_off--> ile sarılır: Cloudflare aksi hâlde onları gizleyip
-        sayfaya kritik yolda duran ek bir betik (email-decode.min.js) ekler. Adres
-        JSON-LD'de zaten düz metin olduğu için gizleme bir koruma da sağlamaz.
+        sayfaya kritik yolda duran ek bir betik (email-decode.min.js) ekler.
     --}}
     @stack('head')
 </head>
 <body class="{{ $bodyClass ?? '' }}">
     @include('partials.header')
 
-    <main id="main">
+    <main id="main" class="app-main">
         @yield('content')
     </main>
 

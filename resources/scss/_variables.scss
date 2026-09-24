@@ -1,104 +1,82 @@
 // ---------------------------------------------------------------
 // Tema değişkenleri (Bootstrap 5 override)
-// Palet: parlak gök mavisi (deniz, gökyüzü) + canlı gün batımı turuncusu (CTA) +
-// güneş sarısı ve turkuaz vurgular. Zeminler açık ve sıcak; koyu renk yalnız footer'da.
+// Palet: koyu lacivert zemin (üst bar, footer) + güneş sarısı vurgu (düğmeler,
+// marka) + gök mavisi ve turuncu rozetler. Mobil uygulama görünümü: beyaz kartlar,
+// yumuşak köşeler, tek sütun.
 // ---------------------------------------------------------------
-$ink:        #0c2340;   // başlıklar, footer
-$deep:       #0a3d91;   // koyu marka mavisi (üst bar, fiyat kutusu)
-$brand:      #0d7de0;   // marka rengi (linkler, vurgular)
+$ink:        #0d2544;   // lacivert: başlıklar, üst bar, footer
+$deep:       #081a33;   // daha koyu lacivert
+$brand:      #0d7de0;   // gök mavisi: linkler, rozetler
 $brand-dark: #0a63b5;
-$aqua:       #12b5cb;   // turkuaz: geçişler ve ikincil vurgu
-$accent:     #ff6a1f;   // CTA
-$accent-dark:#e85510;
-$sun:        #ffc530;   // küçük vurgular (yıldız, rozet)
-$leaf:       #1fb57a;
-$violet:     #7a5af8;
+$sun:        #ffc530;   // güneş sarısı: ana düğmeler, marka vurgusu
+$sun-dark:   #f0b200;
+$accent:     #ff6a1f;   // turuncu: "Popüler" rozeti
+$leaf:       #1fb57a;   // yeşil: "Ara" düğmesi, doğa rozeti
 $whatsapp:   #25d366;
 $whatsapp-dark: #1ebe5a;
 $slate:      #4a5d70;   // gövde metni
 $muted:      #7a8a9a;
-$sand:       #fff8ee;   // sıcak krem bölüm zemini
-$mist:       #eef6fd;   // açık gök mavisi bölüm zemini
+$mist:       #f2f6fb;   // sayfa zemini
 $line:       #dfe9f3;
 
 $primary:   $brand;
-$secondary: $accent;
+$secondary: $sun;
 $success:   #1f9d6b;
 $warning:   $sun;
 $danger:    #d64545;
 $dark:      $ink;
 $light:     $mist;
 $body-color: $slate;
-$body-bg:   #fff;
+$body-bg:   $mist;
 
 $headings-color: $ink;
 $font-family-sans-serif: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-$headings-font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
-$headings-font-weight: 600;
+$headings-font-family: $font-family-sans-serif;
+$headings-font-weight: 800;
 $font-size-base: 1rem;
-$line-height-base: 1.7;
-$h1-font-size: 3rem;
-$h2-font-size: 2.25rem;
-$h3-font-size: 1.5rem;
-$h4-font-size: 1.2rem;
-$h5-font-size: 1.05rem;
-$headings-line-height: 1.18;
+$line-height-base: 1.6;
+$h1-font-size: 2.1rem;
+$h2-font-size: 1.6rem;
+$h3-font-size: 1.2rem;
+$h4-font-size: 1.05rem;
+$headings-line-height: 1.15;
 
 $link-color: $brand;
-$link-hover-color: $accent;
+$link-hover-color: $ink;
 $link-decoration: none;
 
-$border-radius: .625rem;
-$border-radius-lg: 1rem;
-$border-radius-xl: 1.5rem;
+$border-radius: .875rem;
+$border-radius-lg: 1.25rem;
+$border-radius-xl: 1.75rem;
 $btn-border-radius: 999px;
 $btn-border-radius-lg: 999px;
 $btn-border-radius-sm: 999px;
-$btn-padding-y: .72rem;
-$btn-padding-x: 1.5rem;
-$btn-font-weight: 600;
+$btn-padding-y: .7rem;
+$btn-padding-x: 1.35rem;
+$btn-font-weight: 700;
 $btn-font-size: .95rem;
-$btn-font-family: $font-family-sans-serif;
 
 $input-border-color: #cfdcea;
-$input-border-radius: .75rem;
+$input-border-radius: .85rem;
 $input-focus-border-color: $brand;
 $input-focus-box-shadow: 0 0 0 .2rem rgba($brand, .16);
-$input-padding-y: .7rem;
-$input-padding-x: .95rem;
-$form-select-border-radius: .75rem;
+$input-padding-y: .75rem;
+$input-padding-x: 1rem;
+$form-select-border-radius: .85rem;
 $form-select-focus-border-color: $brand;
 $form-select-focus-box-shadow: $input-focus-box-shadow;
-$form-label-font-weight: 600;
+$form-label-font-weight: 700;
 $form-label-color: $ink;
-$form-label-font-size: .9rem;
+$form-label-font-size: .88rem;
 $form-check-input-checked-bg-color: $brand;
 $form-check-input-checked-border-color: $brand;
 
-$accordion-bg: transparent;
-$accordion-button-active-bg: transparent;
-$accordion-button-active-color: $brand;
-$accordion-button-focus-box-shadow: none;
-$accordion-border-color: $line;
-$accordion-button-padding-y: 1.15rem;
-$accordion-button-padding-x: 0;
-$accordion-body-padding-x: 0;
-
-$breadcrumb-divider: quote("›");
-$breadcrumb-divider-color: rgba(#fff, .55);
-$breadcrumb-active-color: rgba(#fff, .85);
-$dropdown-border-color: $line;
-$dropdown-border-radius: 1rem;
-$dropdown-box-shadow: 0 18px 50px rgba($ink, .12);
-$dropdown-link-color: $ink;
-$dropdown-link-hover-bg: $mist;
-$dropdown-link-hover-color: $brand;
-$dropdown-link-active-bg: $mist;
-$dropdown-link-active-color: $brand;
-$dropdown-padding-y: .6rem;
-$dropdown-item-padding-y: .5rem;
-$dropdown-item-padding-x: 1.1rem;
-
-$offcanvas-horizontal-width: 330px;
+$modal-content-border-radius: 1.5rem;
+$modal-content-border-width: 0;
+$modal-header-padding: 1rem 1.25rem;
+$modal-inner-padding: 1.25rem;
+$offcanvas-horizontal-width: 320px;
+$offcanvas-bg-color: $ink;
+$offcanvas-color: #fff;
 $enable-negative-margins: true;
 $enable-shadows: false;

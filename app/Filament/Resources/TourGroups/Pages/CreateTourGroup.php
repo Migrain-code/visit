@@ -11,18 +11,29 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 
+/**
+ * Yolcu Ekle: personelin ana ekranı. Turu seçer, yolcuları girer, kaydeder;
+ * kayıt bir grup olur ("Grup 1", "Grup 2"...).
+ */
 class CreateTourGroup extends CreateRecord
 {
     use ReportsSeatSituation;
 
     protected static string $resource = TourGroupResource::class;
 
-    /** Gruba dönüştürülen rezervasyon talebi (adres çubuğundan gelir). Tarayıcıdan değiştirilemez. */
+    protected static ?string $title = 'Yolcu Ekle';
+
+    /** Gruba dönüştürülen iletişim talebi (adres çubuğundan gelir). Tarayıcıdan değiştirilemez. */
     #[Locked]
     public ?int $requestId = null;
 
+    public function getSubheading(): ?string
+    {
+        return 'Turu seçin, yolcuları alt alta girin. Kaydedince hepsi bir grup olur ve aynı araçta yolculuk eder.';
+    }
+
     /**
-     * Form, seferden ("Grup kaydet") ya da rezervasyon talebinden ("Gruba dönüştür")
+     * Form, turdan ("Yolcu ekle") ya da iletişim talebinden ("Gruba dönüştür")
      * açıldıysa ön doldurulur.
      */
     protected function fillForm(): void
@@ -62,10 +73,6 @@ class CreateTourGroup extends CreateRecord
             $this->requestId = $request->getKey();
 
             $data['tour_departure_id'] ??= $request->tour_departure_id;
-            $data['contact_name'] = $request->name;
-            $data['contact_phone'] = $request->phone;
-            $data['contact_email'] = $request->email;
-            $data['pickup_point'] = $request->location_label ?: null;
             $data['notes'] = $request->message;
 
             // Talepteki kişi sayısı kadar boş yolcu satırı; ilki başvuranın adıyla.
@@ -88,6 +95,13 @@ class CreateTourGroup extends CreateRecord
             $data['reservation_request_id'] = $this->requestId;
         }
 
+        // İletişim kişisi ilk yolcudur; yolcu satırları kayıttan sonra yazıldığı için
+        // ham form durumundan alınır (Passenger kaydedilince yeniden eşitlenir).
+        $first = collect($this->data['passengers'] ?? [])->first(fn ($row) => filled($row['first_name'] ?? null));
+
+        $data['contact_name'] = $first ? trim(($first['first_name'] ?? '').' '.($first['last_name'] ?? '')) : ($data['name'] ?? null);
+        $data['contact_phone'] = $first['phone'] ?? null;
+
         return $data;
     }
 
@@ -100,8 +114,13 @@ class CreateTourGroup extends CreateRecord
         $this->reportSeatSituation($this->record);
     }
 
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return $this->record->name.' kaydedildi';
+    }
+
     protected function getRedirectUrl(): string
     {
-        return TourGroupResource::getUrl('edit', ['record' => $this->record]);
+        return TourGroupResource::getUrl('create', ['departure' => $this->record->tour_departure_id]);
     }
 }

@@ -43,7 +43,7 @@ class AnalyticsTagTest extends TestCase
         Setting::set('google_analytics_id', 'G-J48B75G7Y3');
         Setting::flush();
 
-        foreach (['/', '/turlar', '/turlar/yayla-turlari', '/tur-takvimi', '/ayder-yaylasi-turu', '/rize/ardesen', '/blog', '/iletisim', '/rezervasyon', '/rezervasyon/tesekkurler'] as $url) {
+        foreach (['/', '/iletisim', '/is-basvurusu', '/iletisim/tesekkurler'] as $url) {
             $this->get($url)->assertOk()->assertSee('G-J48B75G7Y3', false);
         }
     }

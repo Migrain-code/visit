@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -36,15 +35,16 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Yönetici',
                 'password' => $password,
-                'role' => UserRole::SuperAdmin,
+                'is_super_admin' => true,
+                'permissions' => [],
                 'is_active' => true,
             ]
         );
 
         // Var olan kurulumlarda ilk hesap süper yönetici olmalı; aksi hâlde
-        // rol sistemi devreye girdiğinde kimse ayarlara ve kullanıcılara erişemez.
-        if ($admin->role !== UserRole::SuperAdmin && User::query()->where('role', UserRole::SuperAdmin)->doesntExist()) {
-            $admin->forceFill(['role' => UserRole::SuperAdmin, 'is_active' => true])->save();
+        // yetki sistemi devreye girdiğinde kimse ayarlara ve personele erişemez.
+        if (! $admin->isSuperAdmin() && User::query()->where('is_super_admin', true)->doesntExist()) {
+            $admin->forceFill(['is_super_admin' => true, 'is_active' => true])->save();
         }
     }
 }

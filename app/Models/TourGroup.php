@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Birlikte seyahat eden yolcular: aile, arkadaş grubu, tek kişi...
+ * Birlikte seyahat eden yolcular: "Yolcu Ekle" ekranında tek seferde girilen liste.
  *
  * GRUP BÖLÜNMEZ. Araç ataması bu modeldedir (departure_vehicle_id); yolcuların ayrı
  * araç alanı yoktur. Bir grubun iki araca dağılması veri modelinde mümkün değildir.
+ *
+ * Ad verilmezse tur içinde sırayla "Grup 1", "Grup 2"... adı alır. İletişim kişisi
+ * ilk yolcudur ve yolcu satırları değiştikçe kendiliğinden güncellenir.
  */
 class TourGroup extends Model
 {
@@ -46,6 +49,14 @@ class TourGroup extends Model
             // Kesin kod kayıttan sonra verilir (kimliğe dayanır); sütun boş geçilemediği için geçici değer.
             $group->code = $group->code ?: 'TMP-'.bin2hex(random_bytes(6));
 
+            if (blank($group->name)) {
+                $group->name = static::nextName($group->tour_departure_id);
+            }
+
+            // İletişim kişisi yolculardan türer; ilk yolcu henüz yazılmadıysa geçici değer.
+            $group->contact_name = $group->contact_name ?: $group->name;
+            $group->contact_phone = $group->contact_phone ?: '-';
+
             if (blank($group->created_by) && auth()->check()) {
                 $group->created_by = auth()->id();
             }
@@ -61,7 +72,7 @@ class TourGroup extends Model
             // Formda boş bırakılan ödeme alanı "hiç ödeme alınmadı" demektir.
             $group->paid_amount ??= 0;
 
-            // Başka sefere taşınan ya da iptal edilen grup araçtaki yerini bırakır.
+            // Başka tura taşınan ya da iptal edilen grup araçtaki yerini bırakır.
             $moved = $group->exists && $group->isDirty('tour_departure_id');
             $cancelled = $group->status === GroupStatus::Cancelled;
 
@@ -70,6 +81,19 @@ class TourGroup extends Model
                 $group->is_pinned = false;
             }
         });
+    }
+
+    /** Turdaki bir sonraki "Grup N" adı: en büyük numaranın bir fazlası. */
+    public static function nextName(int|string|null $departureId): string
+    {
+        $max = static::query()
+            ->where('tour_departure_id', $departureId)
+            ->where('name', 'like', 'Grup %')
+            ->pluck('name')
+            ->map(fn (string $name) => (int) trim(substr($name, 5)))
+            ->max();
+
+        return 'Grup '.(((int) $max) + 1);
     }
 
     // ---------- İlişkiler ----------
@@ -106,11 +130,11 @@ class TourGroup extends Model
         return $query->where('status', '!=', GroupStatus::Cancelled->value);
     }
 
-    /** Rehber yalnız kendi seferlerinin gruplarını görür. */
+    /** Yetkisiz hesap (rehber) yalnız rehberi olduğu turların gruplarını görür. */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user && $user->isGuide()) {
-            return $query->whereHas('departure', fn (Builder $q) => $q->where('guide_id', $user->getKey()));
+        if ($user && $user->isGuideOnly()) {
+            return $query->whereHas('departure', fn (Builder $q) => $q->visibleTo($user));
         }
 
         return $query;
@@ -119,7 +143,7 @@ class TourGroup extends Model
     // ---------- Yolcu sayısı ve araç uyumu ----------
 
     /**
-     * Yolcu sayısını satırlardan yeniden hesaplar.
+     * Yolcu sayısını ve iletişim kişisini satırlardan yeniden hesaplar.
      *
      * Grup büyüyüp bulunduğu araca sığmaz hâle geldiyse araçtan ÇIKARILIR: taşan bir
      * araçla ya da bölünmüş bir grupla yola çıkmaktansa grubun "yerleşmedi" görünmesi
@@ -129,7 +153,15 @@ class TourGroup extends Model
      */
     public function refreshPassengerCount(): bool
     {
-        $this->forceFill(['passenger_count' => $this->passengers()->count()])->saveQuietly();
+        $passengers = $this->passengers()->get();
+        $first = $passengers->first();
+
+        $this->forceFill([
+            'passenger_count' => $passengers->count(),
+            'contact_name' => $first?->full_name ?: ($this->contact_name ?: $this->name),
+            'contact_phone' => $first?->phone ?: ($passengers->firstWhere('phone', '!=', null)?->phone ?: ($this->contact_phone ?: '-')),
+            'pickup_point' => $passengers->pluck('pickup_point')->filter()->unique()->implode(', ') ?: $this->pickup_point,
+        ])->saveQuietly();
 
         return $this->releaseIfOverflowing();
     }
@@ -149,7 +181,7 @@ class TourGroup extends Model
 
     // ---------- Görünüm yardımcıları ----------
 
-    /** "Yılmaz ailesi (5 kişi)" */
+    /** "Grup 3 (5 kişi)" */
     public function getDisplayNameAttribute(): string
     {
         return ($this->name ?: $this->contact_name).' ('.$this->passenger_count.' kişi)';

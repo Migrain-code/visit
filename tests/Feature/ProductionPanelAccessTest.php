@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\CreatesStaff;
 use Tests\TestCase;
 
 /**
@@ -20,7 +19,7 @@ use Tests\TestCase;
  */
 class ProductionPanelAccessTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesStaff, RefreshDatabase;
 
     protected bool $seed = true;
 
@@ -32,37 +31,23 @@ class ProductionPanelAccessTest extends TestCase
         config(['app.env' => 'production']);
     }
 
-    private function user(UserRole $role, bool $active = true): User
-    {
-        return User::create([
-            'name' => $role->label(),
-            'email' => $role->value.'@canli.test',
-            'password' => 'parola1234',
-            'role' => $role,
-            'is_active' => $active,
-        ]);
-    }
-
-    public static function roles(): array
-    {
-        return collect(UserRole::cases())->mapWithKeys(fn (UserRole $r) => [$r->label() => [$r]])->all();
-    }
-
     public function test_user_model_implements_the_filament_contract(): void
     {
         $this->assertInstanceOf(FilamentUser::class, new User);
     }
 
-    #[DataProvider('roles')]
-    public function test_every_active_role_can_enter_the_panel_in_production(UserRole $role): void
+    public function test_every_active_account_can_enter_the_panel_in_production(): void
     {
-        $this->actingAs($this->user($role))->get('/admin')->assertOk();
+        foreach ([$this->superAdmin(), $this->operations(), $this->registrar(), $this->guide()] as $user) {
+            $this->actingAs($user)->get('/admin')->assertOk();
+        }
     }
 
-    #[DataProvider('roles')]
-    public function test_inactive_accounts_are_locked_out_in_production(UserRole $role): void
+    public function test_inactive_accounts_are_locked_out_in_production(): void
     {
-        $this->actingAs($this->user($role, active: false))->get('/admin')->assertForbidden();
+        foreach ([$this->superAdmin(['is_active' => false]), $this->guide(['is_active' => false])] as $user) {
+            $this->actingAs($user)->get('/admin')->assertForbidden();
+        }
     }
 
     public function test_guests_are_sent_to_the_login_page_in_production(): void
@@ -90,7 +75,7 @@ class ProductionPanelAccessTest extends TestCase
     {
         $this->app->detectEnvironment(fn () => 'production');
         putenv('ADMIN_EMAIL=guclu@canli.test');
-        putenv('ADMIN_PASSWORD=Trakya-Montaj-2026!x');
+        putenv('ADMIN_PASSWORD=Rize-Geziyor-2026!x');
 
         try {
             app(AdminUserSeeder::class)->run();
@@ -99,6 +84,6 @@ class ProductionPanelAccessTest extends TestCase
             putenv('ADMIN_PASSWORD');
         }
 
-        $this->assertTrue(User::where('email', 'guclu@canli.test')->where('role', UserRole::SuperAdmin)->exists());
+        $this->assertTrue(User::where('email', 'guclu@canli.test')->where('is_super_admin', true)->exists());
     }
 }

@@ -9,8 +9,8 @@ use Illuminate\View\View;
 /**
  * Yolcu listesi (manifesto): araç araç, yazdırılabilir.
  *
- * Yalnız panele giriş yapmış ve seferi görme yetkisi olan kullanıcıya açılır.
- * Rehber yalnız kendi seferinin listesini alabilir.
+ * Yalnız panele giriş yapmış ve turu görme yetkisi olan kullanıcıya açılır.
+ * Rehber yalnız kendi turunun listesini alabilir.
  */
 class ManifestController extends Controller
 {
@@ -21,10 +21,10 @@ class ManifestController extends Controller
 
         Gate::authorize('manifest', $departure);
 
-        $departure->load(['tour', 'guide']);
+        $departure->load('guide');
 
         $vehicles = $departure->vehicles()
-            ->with(['groups' => fn ($q) => $q->seatHolding()->with('passengers')])
+            ->with(['guide', 'groups' => fn ($q) => $q->seatHolding()->with('passengers')])
             ->get();
 
         $waiting = $departure->seatHoldingGroups()

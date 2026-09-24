@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\GroupStatus;
-use App\Enums\UserRole;
 use App\Filament\Resources\TourDepartures\Pages\CreateTourDeparture;
 use App\Filament\Resources\TourDepartures\Pages\DepartureAllocation;
 use App\Filament\Resources\TourGroups\Pages\CreateTourGroup;
@@ -11,10 +10,8 @@ use App\Filament\Resources\TourGroups\Pages\EditTourGroup;
 use App\Models\Passenger;
 use App\Models\ReservationRequest;
 use App\Models\Setting;
-use App\Models\Tour;
 use App\Models\TourDeparture;
 use App\Models\TourGroup;
-use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\Allocation\DepartureAllocator;
 use Filament\Facades\Filament;
@@ -24,6 +21,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use RuntimeException;
+use Tests\Concerns\CreatesStaff;
 use Tests\TestCase;
 
 /**
@@ -33,7 +31,7 @@ use Tests\TestCase;
  */
 class TourOperationsTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesStaff, RefreshDatabase;
 
     protected bool $seed = true;
 
@@ -54,22 +52,13 @@ class TourOperationsTest extends TestCase
         $this->beforeApplicationDestroyed($undo);
     }
 
-    private function admin(): User
-    {
-        return User::where('email', 'admin@example.com')->firstOrFail();
-    }
-
-    private function user(UserRole $role): User
-    {
-        return User::create(['name' => $role->label(), 'email' => $role->value.'@ornek.test', 'password' => 'parola1234', 'role' => $role, 'is_active' => true]);
-    }
-
-    /** @param array<int, int> $seats sefere atanacak araçların koltuk sayıları */
+    /** @param array<int, int> $seats tura atanacak araçların koltuk sayıları */
     private function departure(array $seats = [], array $attributes = []): TourDeparture
     {
         $departure = TourDeparture::create(array_merge([
-            'tour_id' => Tour::where('slug', 'batum-tiflis-turu')->firstOrFail()->getKey(),
-            'starts_at' => now()->addDays(20)->setTime(20, 0),
+            'title' => 'Batum',
+            'starts_at' => now()->addDays(20)->setTime(7, 0),
+            'price' => 1250,
         ], $attributes));
 
         foreach ($seats as $count) {
@@ -81,14 +70,10 @@ class TourOperationsTest extends TestCase
 
     private function group(TourDeparture $departure, int $size, array $attributes = []): TourGroup
     {
-        $group = TourGroup::create(array_merge([
-            'tour_departure_id' => $departure->getKey(),
-            'contact_name' => $size.' kişilik grup',
-            'contact_phone' => '05321112233',
-        ], $attributes));
+        $group = TourGroup::create(array_merge(['tour_departure_id' => $departure->getKey()], $attributes));
 
         for ($i = 0; $i < $size; $i++) {
-            $group->passengers()->create(['first_name' => 'Yolcu', 'last_name' => (string) ++$this->tcSerial, 'age' => 30, 'gender' => 'male']);
+            $group->passengers()->create(['first_name' => 'Yolcu', 'last_name' => (string) ++$this->tcSerial, 'age' => 21, 'gender' => 'male']);
         }
 
         return $group->refresh();
@@ -102,37 +87,37 @@ class TourOperationsTest extends TestCase
         }
     }
 
-    // ---------- Sefer ----------
+    // ---------- Tur ----------
 
-    public function test_departure_gets_a_code_and_an_end_date_from_the_tour(): void
+    public function test_tour_gets_a_code_and_defaults_to_a_day_trip(): void
     {
-        $departure = $this->departure([], ['starts_at' => '2027-05-14 20:00:00']);
+        $tour = $this->departure([], ['starts_at' => '2027-05-14 07:00:00']);
 
-        $this->assertSame('BAT-140527', $departure->code);
-        // Batum Tiflis turu 3 gün sürer: 14 Mayıs'ta çıkan tur 16 Mayıs'ta döner.
-        $this->assertSame('2027-05-16', $departure->ends_on->toDateString());
+        $this->assertSame('BAT-140527', $tour->code);
+        $this->assertSame('2027-05-14', $tour->ends_on->toDateString(), 'dönüş tarihi girilmediyse günübirlik');
 
         $second = $this->departure([], ['starts_at' => '2027-05-14 08:00:00']);
-        $this->assertSame('BAT-140527-2', $second->code, 'aynı güne ikinci sefer ayrı kod almalı');
+        $this->assertSame('BAT-140527-2', $second->code, 'aynı güne ikinci tur ayrı kod almalı');
     }
 
     public function test_vehicle_details_are_copied_so_history_survives_fleet_changes(): void
     {
-        $fleet = Vehicle::create(['name' => 'Sprinter', 'seat_count' => 19, 'plate' => '59 ABC 123', 'driver_name' => 'Ali Usta']);
+        $fleet = Vehicle::create(['name' => 'Sprinter', 'seat_count' => 19, 'plate' => '53 ABC 123', 'driver_name' => 'Ali Usta']);
         $departure = $this->departure();
-        $assigned = $departure->vehicles()->create(['vehicle_id' => $fleet->id]);
+        $assigned = $departure->vehicles()->create(['vehicle_id' => $fleet->id, 'cost' => 4500]);
 
-        $this->assertSame([19, '59 ABC 123', 'Ali Usta'], [$assigned->seat_count, $assigned->plate, $assigned->driver_name]);
+        $this->assertSame([19, '53 ABC 123', 'Ali Usta'], [$assigned->seat_count, $assigned->plate, $assigned->driver_name]);
 
         $fleet->update(['seat_count' => 16]);
         $fleet->delete();
 
         $assigned->refresh();
-        $this->assertSame(19, $assigned->seat_count, 'filodaki değişiklik geçmiş seferi bozmamalı');
+        $this->assertSame(19, $assigned->seat_count, 'filodaki değişiklik geçmiş turu bozmamalı');
         $this->assertNull($assigned->vehicle_id);
+        $this->assertSame('4500.00', (string) $assigned->cost);
     }
 
-    public function test_selected_fleet_vehicles_are_attached_when_a_departure_is_created(): void
+    public function test_selected_fleet_vehicles_are_attached_when_a_tour_is_created(): void
     {
         $this->actingAs($this->admin());
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -141,8 +126,8 @@ class TourOperationsTest extends TestCase
 
         Livewire::test(CreateTourDeparture::class)
             ->fillForm([
-                'tour_id' => Tour::where('slug', 'uzungol-turu')->value('id'),
-                'starts_at' => now()->addDays(45)->setTime(20, 0)->format('Y-m-d H:i:s'),
+                'title' => 'Uzungöl',
+                'starts_at' => now()->addDays(45)->setTime(8, 0)->format('Y-m-d H:i:s'),
                 'status' => 'open',
                 'vehicle_ids' => $fleet,
             ])
@@ -169,6 +154,7 @@ class TourOperationsTest extends TestCase
         $this->assertSame(42, $fresh->capacity, '19 + 24 - 1 ayrılmış koltuk');
         $this->assertSame(9, $fresh->seats_taken);
         $this->assertSame(33, $fresh->seats_left);
+        $this->assertSame(33, $fresh->empty_seats);
         $this->assertSame(9, $fresh->unassigned_passengers);
 
         // Kontenjan girilirse satış sınırı odur.
@@ -200,7 +186,7 @@ class TourOperationsTest extends TestCase
 
         // Veri modelinde araç ataması GRUPTADIR: bir grubun yolcuları farklı araçta olamaz.
         $this->assertFalse(Schema::hasColumn('passengers', 'departure_vehicle_id'));
-        $this->assertNotNull($departure->allocated_at?->toDateTimeString() ?? $departure->fresh()->allocated_at);
+        $this->assertNotNull($departure->fresh()->allocated_at);
     }
 
     public function test_a_group_that_fits_nowhere_waits_instead_of_being_split(): void
@@ -256,8 +242,6 @@ class TourOperationsTest extends TestCase
         $this->assertSame($second->id, $seated->fresh()->departure_vehicle_id, 'yerleşmiş grup yerinde kalmalı');
         $this->assertSame($first->id, $waiting->fresh()->departure_vehicle_id);
 
-        // "Baştan dağıt" ise sabitlenmemiş grubu taşıyabilir: 11 yolcu tek araca sığmaz ama
-        // dağılım en dolu düzene göre yeniden kurulur ve yine kimse bölünmez.
         app(DepartureAllocator::class)->allocate($departure, keepExisting: false);
         $this->assertNoVehicleOverflows($departure);
     }
@@ -283,7 +267,7 @@ class TourOperationsTest extends TestCase
         $this->assertSame(0, $departure->fresh()->unassigned_passengers);
     }
 
-    public function test_manual_move_refuses_to_overfill_or_cross_departures(): void
+    public function test_manual_move_refuses_to_overfill_or_cross_tours(): void
     {
         $departure = $this->departure([6]);
         $vehicle = $departure->vehicles()->first();
@@ -316,7 +300,7 @@ class TourOperationsTest extends TestCase
         app(DepartureAllocator::class)->move($family, $small);
         app(DepartureAllocator::class)->move($couple, $small);
 
-        // Aileye bir kişi daha eklendi: 5 + 2 = 7 > 6.
+        // Gruba bir kişi daha eklendi: 5 + 2 = 7 > 6.
         $family->passengers()->create(['first_name' => 'Yeni', 'last_name' => 'Yolcu']);
 
         $family->refresh();
@@ -340,11 +324,9 @@ class TourOperationsTest extends TestCase
         app(DepartureAllocator::class)->move($a, $first);
         app(DepartureAllocator::class)->move($b, $second);
 
-        // Araç değişti: 10 yerine 5 koltuklu geldi. 6 kişilik grup sığmaz.
         $first->update(['seat_count' => 5]);
         $this->assertNull($a->fresh()->departure_vehicle_id);
 
-        // Araç seferden çıkarıldı: grup SİLİNMEZ, bekleyenlere döner.
         $second->delete();
         $b->refresh();
         $this->assertNull($b->departure_vehicle_id);
@@ -352,7 +334,7 @@ class TourOperationsTest extends TestCase
         $this->assertSame(5, $b->passenger_count);
     }
 
-    public function test_moving_a_group_to_another_departure_clears_its_vehicle(): void
+    public function test_moving_a_group_to_another_tour_clears_its_vehicle(): void
     {
         $from = $this->departure([10]);
         $to = $this->departure([10], ['starts_at' => now()->addDays(50)]);
@@ -362,7 +344,7 @@ class TourOperationsTest extends TestCase
 
         $group->fresh()->update(['tour_departure_id' => $to->id]);
 
-        $this->assertNull($group->fresh()->departure_vehicle_id, 'eski seferin aracı yeni seferde geçersizdir');
+        $this->assertNull($group->fresh()->departure_vehicle_id, 'eski turun aracı yeni turda geçersizdir');
     }
 
     public function test_reset_clears_every_assignment_but_keeps_the_records(): void
@@ -389,8 +371,8 @@ class TourOperationsTest extends TestCase
 
         $this->artisan('tours:allocate-upcoming')->assertSuccessful();
 
-        $this->assertNotNull($soonGroup->fresh()->departure_vehicle_id, 'kalkışa 48 saatten az kalan sefer yerleştirilmeli');
-        $this->assertNull($laterGroup->fresh()->departure_vehicle_id, 'uzak tarihli sefere dokunulmamalı');
+        $this->assertNotNull($soonGroup->fresh()->departure_vehicle_id, 'kalkışa 48 saatten az kalan tur yerleştirilmeli');
+        $this->assertNull($laterGroup->fresh()->departure_vehicle_id, 'uzak tarihli tura dokunulmamalı');
 
         // Ayarlardan kapatılabilir.
         Setting::set('auto_allocate_hours', '0');
@@ -417,19 +399,19 @@ class TourOperationsTest extends TestCase
         $this->assertNotNull($group->fresh()->departure_vehicle_id, 'saatlik dağıtım zamanlayıcının içinde çalışmadı');
     }
 
-    // ---------- Grup ve yolcu kaydı ----------
+    // ---------- Yolcu Ekle ----------
 
     private function passenger(array $overrides = []): array
     {
         return array_merge([
             'first_name' => 'Ayşe', 'last_name' => 'Yılmaz', 'tc_no' => self::TC[0],
-            'phone' => '05321112233', 'age' => 34, 'gender' => 'female', 'is_foreign' => false,
+            'phone' => '05321112233', 'pickup_point' => 'Yerleşke önü', 'age' => 21, 'gender' => 'female', 'is_foreign' => false,
         ], $overrides);
     }
 
-    public function test_staff_registers_a_group_with_its_passengers(): void
+    public function test_staff_adds_passengers_and_they_become_an_auto_named_group(): void
     {
-        $registrar = $this->user(UserRole::Kayit);
+        $registrar = $this->registrar();
         $this->actingAs($registrar);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
@@ -439,31 +421,39 @@ class TourOperationsTest extends TestCase
             ->fillForm([
                 'tour_departure_id' => $departure->id,
                 'status' => 'confirmed',
-                'name' => 'Sınama ailesi',
-                'contact_name' => 'Ayşe Yılmaz',
-                'contact_phone' => '0532 111 22 33',
-                'pickup_point' => 'Ardeşen otel önü',
                 'passengers' => [
                     $this->passenger(),
-                    $this->passenger(['first_name' => 'Mehmet', 'tc_no' => self::TC[1], 'age' => 36, 'gender' => 'male']),
-                    $this->passenger(['first_name' => 'Elif', 'tc_no' => self::TC[2], 'age' => 8, 'phone' => null]),
+                    $this->passenger(['first_name' => 'Mehmet', 'tc_no' => self::TC[1], 'gender' => 'male', 'phone' => null, 'pickup_point' => 'Rize Otogar']),
+                    $this->passenger(['first_name' => 'Elif', 'tc_no' => self::TC[2], 'phone' => null]),
                 ],
             ])
             ->call('create')
             ->assertHasNoFormErrors();
 
-        // (Örnek veride de bir "Yılmaz ailesi" var; ad bilerek farklı.)
-        $group = TourGroup::query()->where('name', 'Sınama ailesi')->firstOrFail();
+        $group = TourGroup::query()->where('tour_departure_id', $departure->id)->firstOrFail();
 
+        $this->assertSame('Grup 1', $group->name, 'ad verilmediyse sırayla "Grup 1"');
         $this->assertSame(3, $group->passenger_count, 'grup büyüklüğü yolcu satırlarından türemeli');
-        $this->assertSame('G-'.str_pad((string) $group->id, 5, '0', STR_PAD_LEFT), $group->code);
+        $this->assertSame('Ayşe Yılmaz', $group->contact_name, 'iletişim kişisi ilk yolcudur');
+        $this->assertSame('05321112233', $group->contact_phone);
+        $this->assertSame('Yerleşke önü, Rize Otogar', $group->pickup_point, 'biniş noktaları yolculardan derlenir');
         $this->assertSame($registrar->id, $group->created_by);
-        $this->assertSame('Sınama ailesi (3 kişi)', $group->display_name);
+        $this->assertSame('Grup 1 (3 kişi)', $group->display_name);
 
         $first = $group->passengers()->first();
-        $this->assertSame(['Ayşe', 'Yılmaz', self::TC[0], 34], [$first->first_name, $first->last_name, $first->tc_no, $first->age]);
-        $this->assertSame('Kadın', $first->gender->label());
+        $this->assertSame(['Ayşe', 'Yılmaz', self::TC[0], 'Yerleşke önü'], [$first->first_name, $first->last_name, $first->tc_no, $first->pickup_point]);
         $this->assertSame('100******46', $first->masked_identity, 'liste ekranlarında kimlik maskelenir');
+
+        // İkinci kayıt "Grup 2" olur; ad verilirse o kullanılır.
+        Livewire::test(CreateTourGroup::class)
+            ->fillForm(['tour_departure_id' => $departure->id, 'status' => 'confirmed', 'passengers' => [$this->passenger(['tc_no' => self::TC[3], 'first_name' => 'Can'])]])
+            ->call('create')->assertHasNoFormErrors();
+        Livewire::test(CreateTourGroup::class)
+            ->fillForm(['tour_departure_id' => $departure->id, 'status' => 'confirmed', 'name' => 'Turizm 2. sınıf', 'passengers' => [$this->passenger(['tc_no' => self::TC[4], 'first_name' => 'Ece'])]])
+            ->call('create')->assertHasNoFormErrors();
+
+        $this->assertSame(['Grup 1', 'Grup 2', 'Turizm 2. sınıf'], $departure->groups()->pluck('name')->all());
+        $this->assertSame('Grup 3', TourGroup::nextName($departure->id));
     }
 
     public function test_identity_numbers_are_validated(): void
@@ -472,7 +462,7 @@ class TourOperationsTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
         $departure = $this->departure([19]);
-        $base = ['tour_departure_id' => $departure->id, 'status' => 'confirmed', 'contact_name' => 'Test', 'contact_phone' => '05321112233'];
+        $base = ['tour_departure_id' => $departure->id, 'status' => 'confirmed'];
 
         // Tek hanesi yanlış yazılmış numara: kontrol basamağı tutmaz.
         Livewire::test(CreateTourGroup::class)
@@ -486,16 +476,16 @@ class TourOperationsTest extends TestCase
             ->call('create')
             ->assertHasFormErrors();
 
-        // Kesin kayıtta kimlik, yaş ve cinsiyet zorunludur.
+        // Kesin kayıtta kimlik ve cinsiyet zorunludur.
         Livewire::test(CreateTourGroup::class)
-            ->fillForm($base + ['passengers' => [$this->passenger(['tc_no' => null, 'age' => null, 'gender' => null])]])
+            ->fillForm($base + ['passengers' => [$this->passenger(['tc_no' => null, 'gender' => null])]])
             ->call('create')
             ->assertHasFormErrors();
 
         $this->assertSame(0, TourGroup::where('tour_departure_id', $departure->id)->count());
     }
 
-    public function test_the_same_person_cannot_be_registered_twice_on_one_departure(): void
+    public function test_the_same_person_cannot_be_registered_twice_on_one_tour(): void
     {
         $this->actingAs($this->admin());
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -503,18 +493,14 @@ class TourOperationsTest extends TestCase
         $departure = $this->departure([19]);
         $other = $this->departure([19], ['starts_at' => now()->addDays(60)]);
 
-        $existing = $this->group($departure, 0, ['contact_name' => 'İlk Kayıt']);
+        $existing = $this->group($departure, 0);
         $existing->passengers()->create($this->passenger());
 
-        $form = fn (int $departureId) => [
-            'tour_departure_id' => $departureId, 'status' => 'confirmed',
-            'contact_name' => 'İkinci Kayıt', 'contact_phone' => '05321112299',
-            'passengers' => [$this->passenger()],
-        ];
+        $form = fn (int $departureId) => ['tour_departure_id' => $departureId, 'status' => 'confirmed', 'passengers' => [$this->passenger()]];
 
         Livewire::test(CreateTourGroup::class)->fillForm($form($departure->id))->call('create')->assertHasFormErrors();
 
-        // Aynı kişi BAŞKA bir sefere elbette kaydolabilir.
+        // Aynı kişi BAŞKA bir tura elbette kaydolabilir.
         Livewire::test(CreateTourGroup::class)->fillForm($form($other->id))->call('create')->assertHasNoFormErrors();
 
         // İptal edilen kayıt engel olmaz.
@@ -532,9 +518,8 @@ class TourOperationsTest extends TestCase
         Livewire::test(CreateTourGroup::class)
             ->fillForm([
                 'tour_departure_id' => $departure->id, 'status' => 'pending',
-                'contact_name' => 'Telefonla Arayan', 'contact_phone' => '05321112233',
                 'passengers' => [
-                    ['first_name' => 'Hasan', 'last_name' => 'Kaya'],
+                    ['first_name' => 'Hasan', 'last_name' => 'Kaya', 'phone' => '05321112233'],
                     ['first_name' => 'Misafir', 'last_name' => '2'],
                 ],
             ])
@@ -554,8 +539,7 @@ class TourOperationsTest extends TestCase
         Livewire::test(CreateTourGroup::class)
             ->fillForm([
                 'tour_departure_id' => $departure->id, 'status' => 'confirmed',
-                'contact_name' => 'John Smith', 'contact_phone' => '05321112233',
-                'passengers' => [['first_name' => 'John', 'last_name' => 'Smith', 'is_foreign' => true, 'passport_no' => 'P1234567', 'age' => 41, 'gender' => 'male']],
+                'passengers' => [['first_name' => 'John', 'last_name' => 'Smith', 'is_foreign' => true, 'passport_no' => 'P1234567', 'gender' => 'male']],
             ])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -586,7 +570,7 @@ class TourOperationsTest extends TestCase
         $this->assertSame([self::TC[0], self::TC[1], self::TC[2]], $group->passengers()->pluck('tc_no')->all());
     }
 
-    public function test_reservation_request_becomes_a_group(): void
+    public function test_contact_request_becomes_a_group(): void
     {
         $this->actingAs($this->admin());
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -594,34 +578,31 @@ class TourOperationsTest extends TestCase
         $departure = $this->departure([19]);
         $request = ReservationRequest::create([
             'name' => 'Zeynep Demir', 'phone' => '05329998877', 'email' => 'zeynep@ornek.test',
-            'tour_id' => $departure->tour_id, 'tour_departure_id' => $departure->id,
+            'tour_departure_id' => $departure->id,
             'people_count' => 3, 'message' => 'Cam kenarı olursa seviniriz.', 'kvkk_accepted' => true,
         ]);
 
         $page = Livewire::withQueryParams(['request' => $request->id])->test(CreateTourGroup::class);
 
-        // Form talepten ön doldurulur: iletişim bilgisi ve kişi sayısı kadar yolcu satırı.
-        $page->assertFormSet([
-            'tour_departure_id' => $departure->id,
-            'contact_name' => 'Zeynep Demir',
-            'contact_phone' => '05329998877',
-        ]);
+        // Form talepten ön doldurulur: tur ve kişi sayısı kadar yolcu satırı.
+        $page->assertFormSet(['tour_departure_id' => $departure->id]);
         $this->assertCount(3, $page->get('data.passengers'));
 
-        // İlk satır başvuranın adıyla gelir.
-        $this->assertSame(['Zeynep', 'Demir'], [$page->get('data.passengers.0.first_name'), $page->get('data.passengers.0.last_name')]);
+        // İlk satır başvuranın adı ve telefonuyla gelir.
+        $this->assertSame(['Zeynep', 'Demir', '05329998877'], [$page->get('data.passengers.0.first_name'), $page->get('data.passengers.0.last_name'), $page->get('data.passengers.0.phone')]);
 
         $page->fillForm([
             'passengers' => [
-                $this->passenger(['first_name' => 'Zeynep', 'last_name' => 'Demir']),
+                $this->passenger(['first_name' => 'Zeynep', 'last_name' => 'Demir', 'phone' => '05329998877']),
                 $this->passenger(['first_name' => 'Can', 'last_name' => 'Demir', 'tc_no' => self::TC[1], 'gender' => 'male']),
-                $this->passenger(['first_name' => 'Ece', 'last_name' => 'Demir', 'tc_no' => self::TC[2], 'age' => 6]),
+                $this->passenger(['first_name' => 'Ece', 'last_name' => 'Demir', 'tc_no' => self::TC[2]]),
             ],
         ])->call('create')->assertHasNoFormErrors();
 
         $group = TourGroup::where('reservation_request_id', $request->id)->firstOrFail();
 
         $this->assertSame(3, $group->passenger_count);
+        $this->assertSame('Zeynep Demir', $group->contact_name);
         $this->assertSame(ReservationRequest::STATUS_RESERVED, $request->fresh()->status, 'talep "kayda dönüştü" olmalı');
         $this->assertSame($group->id, $request->fresh()->group->id);
     }
@@ -657,8 +638,7 @@ class TourOperationsTest extends TestCase
         $board->call('togglePin', $mover->id);
         $this->assertFalse($mover->fresh()->is_pinned);
 
-        // Dolu araç "Taşı" listesinde hiç sunulmaz: seçilmeye çalışılırsa form reddeder
-        // ve grup olduğu yerde kalır.
+        // Dolu araç "Taşı" listesinde hiç sunulmaz: seçilmeye çalışılırsa form reddeder.
         $first->update(['seat_count' => $first->occupied_seats]);
         Livewire::test(DepartureAllocation::class, ['record' => $departure->id])
             ->callAction('moveGroup', data: ['vehicle' => $first->id], arguments: ['group' => $mover->id])
@@ -671,7 +651,7 @@ class TourOperationsTest extends TestCase
 
     public function test_registrar_sees_the_board_but_cannot_change_it(): void
     {
-        $this->actingAs($this->user(UserRole::Kayit));
+        $this->actingAs($this->registrar());
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
         $departure = $this->departure([19]);
@@ -686,20 +666,21 @@ class TourOperationsTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_manifest_lists_passengers_vehicle_by_vehicle(): void
+    public function test_manifest_lists_passengers_vehicle_by_vehicle_with_pickup_points(): void
     {
         // 4 + 8 = 12 yolcu: tek araca sığmaz, iki araç da kullanılır.
         $departure = $this->departure([4, 10]);
-        $family = $this->group($departure, 3, ['name' => 'Manifesto Ailesi', 'pickup_point' => 'Ardeşen otel önü']);
-        $family->passengers()->create($this->passenger(['first_name' => 'Fatma', 'last_name' => 'Manifesto']));
+        $family = $this->group($departure, 3, ['name' => 'Manifesto Grubu']);
+        $family->passengers()->create($this->passenger(['first_name' => 'Fatma', 'last_name' => 'Manifesto', 'pickup_point' => 'Çayeli Meydan']));
         $this->group($departure, 8, ['name' => 'Kalabalık Grup']);
 
         app(DepartureAllocator::class)->allocate($departure);
 
         $this->actingAs($this->admin())->get(route('admin.manifest', $departure))
             ->assertOk()
-            ->assertSeeInOrder(['1. Araç', 'Manifesto Ailesi', 'Fatma Manifesto', self::TC[0], '2. Araç', 'Kalabalık Grup'])
-            ->assertSee('Ardeşen otel önü')
-            ->assertSee('KVKK');
+            ->assertSeeInOrder(['1. Araç', 'Manifesto Grubu', 'Fatma Manifesto', self::TC[0], '2. Araç', 'Kalabalık Grup'])
+            ->assertSee('Çayeli Meydan')
+            ->assertSee('KVKK')
+            ->assertDontSee('Sefer kodu');
     }
 }

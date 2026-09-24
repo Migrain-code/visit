@@ -1,57 +1,30 @@
-{{--
-    Tur kartı. $tour->next_departure (withMin ile gelir) varsa en yakın sefer tarihi gösterilir.
-    Görsel iki boyda üretilir; kart genişliğine göre tarayıcı seçer.
---}}
+{{-- Ana sayfadaki tur kartı. Tıklanınca detay penceresi açılır; fiyat düğmesi de aynı pencereye gider. --}}
 @php
     $variants = app(\App\Services\Media\ImageVariants::class);
-    $hasImage = filled($tour->image);
-    $next = $tour->next_departure ? \Illuminate\Support\Carbon::parse($tour->next_departure) : null;
+    $wide = ($index ?? 0) % 5 === 4; // her beşinci kart geniş (yatay) düzen
 @endphp
-<article class="tour-card">
-    <a class="tour-card-media" href="{{ $tour->url }}" tabindex="-1" aria-hidden="true">
-        @if ($hasImage)
-            <img src="{{ $variants->url($tour->image, 640, 427) }}"
-                 srcset="{{ $variants->url($tour->image, 480, 320) }} 480w, {{ $variants->url($tour->image, 800, 533) }} 800w"
-                 sizes="(max-width: 767px) 92vw, (max-width: 1199px) 46vw, 380px"
-                 alt="{{ $tour->image_alt ?: $tour->title }}" width="640" height="427" loading="lazy" decoding="async">
-        @else
-            <img src="{{ asset('images/placeholder.svg') }}" alt="" width="640" height="427" loading="lazy">
+<article class="tour-card {{ $wide ? 'is-wide' : '' }}">
+    <a class="tour-card-media" href="#tour-{{ $tour->id }}" data-bs-toggle="modal" data-bs-target="#tour-{{ $tour->id }}" aria-label="{{ $tour->title }} detayları">
+        <img src="{{ $variants->url($tour->image, 640, 480) ?? $tour->image_url }}" alt="{{ $tour->image_alt ?: $tour->title }}" loading="lazy" decoding="async" width="640" height="480">
+        @if ($tour->badge)
+            <span class="pill pill-badge"><i class="fa-solid fa-fire"></i>{{ $tour->badge }}</span>
         @endif
-        <span class="tour-card-badges">
-            <span class="pill"><i class="fa-regular fa-clock"></i>{{ $tour->duration_label }}</span>
-            @if ($tour->has_discount)
-                <span class="pill pill-accent">%{{ $tour->discount_percent }} indirim</span>
-            @endif
-        </span>
+        @if ($tour->is_full)
+            <span class="pill pill-full">Doldu</span>
+        @elseif ($tour->seats_left !== null && $tour->seats_left <= 5)
+            <span class="pill pill-full">Son {{ $tour->seats_left }} koltuk</span>
+        @endif
     </a>
     <div class="tour-card-body">
-        @if ($tour->category)
-            <a class="tour-card-category" href="{{ $tour->category->url }}">{{ $tour->category->name }}</a>
+        <h3><a href="#tour-{{ $tour->id }}" data-bs-toggle="modal" data-bs-target="#tour-{{ $tour->id }}">{{ $tour->title }}</a></h3>
+        @if ($tour->short_description)
+            <p>{{ \Illuminate\Support\Str::limit($tour->short_description, 90) }}</p>
         @endif
-        <h3><a href="{{ $tour->url }}">{{ $tour->title }}</a></h3>
-        <p>{{ \Illuminate\Support\Str::limit($tour->short_description, 120) }}</p>
-        <ul class="tour-card-meta">
-            @if ($next)
-                <li><i class="fa-regular fa-calendar"></i>İlk tarih: {{ $next->translatedFormat('j F') }}</li>
-            @else
-                <li><i class="fa-regular fa-calendar"></i>Tarih için sorun</li>
-            @endif
-            @if ($tour->transport)
-                <li><i class="fa-solid fa-bus"></i>{{ \Illuminate\Support\Str::limit($tour->transport, 22) }}</li>
-            @endif
-        </ul>
         <div class="tour-card-footer">
-            <div class="price">
-                @if ($tour->price_label)
-                    <span class="from">Kişi başı</span>
-                    @if ($tour->old_price_label)<span class="old">{{ $tour->old_price_label }}</span>@endif
-                    <span class="now">{{ $tour->price_label }}</span>
-                @else
-                    <span class="from">Fiyat</span>
-                    <span class="now fs-5">Sorunuz</span>
-                @endif
-            </div>
-            <a class="btn btn-brand btn-sm" href="{{ $tour->url }}">İncele<i class="fa-solid fa-arrow-right"></i></a>
+            <span class="date-chip"><i class="fa-regular fa-calendar"></i>{{ $tour->short_date_label }}</span>
+            <a class="price-btn" href="#tour-{{ $tour->id }}" data-bs-toggle="modal" data-bs-target="#tour-{{ $tour->id }}">
+                {{ $tour->price_label ?? 'Detay' }}<i class="fa-solid fa-arrow-right"></i>
+            </a>
         </div>
     </div>
 </article>

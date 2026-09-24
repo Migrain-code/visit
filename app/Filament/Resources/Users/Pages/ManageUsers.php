@@ -12,14 +12,13 @@ class ManageUsers extends ManageRecords
 
     public function getSubheading(): ?string
     {
-        return 'Roller yetkiyi belirler. "Web sitesinde göster" açık olan personelin '
-            .'iletişim bilgileri sitenin iletişim sayfasında yayınlanır.';
+        return 'Her personel için yapabileceklerini kutularla işaretleyin. Yetkisi olmayan personel yalnız rehberi olduğu turları ve kendi kazancını görür.';
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->label('Personel ekle'),
         ];
     }
 }
