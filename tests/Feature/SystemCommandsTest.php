@@ -7,7 +7,15 @@ use App\Filament\Pages\SystemCommands;
 use App\Jobs\QueueHeartbeat;
 use App\Jobs\RunConsoleCommand;
 use App\Models\CommandRun;
+use App\Models\DepartureVehicle;
+use App\Models\Passenger;
+use App\Models\ReservationRequest;
+use App\Models\TourCommission;
+use App\Models\TourDeparture;
+use App\Models\TourGroup;
+use App\Models\TourLedgerEntry;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Services\Admin\CommandRunner;
 use App\Support\Console\CommandCatalog;
 use App\Support\Console\InProcess;
@@ -285,6 +293,54 @@ class SystemCommandsTest extends TestCase
         $page->call('$refresh')->assertOk();
 
         $this->assertDatabaseHas('command_runs', ['command_key' => 'optimize', 'status' => CommandRun::SUCCEEDED]);
+    }
+
+    // ---------- Test verilerini temizle ----------
+
+    public function test_clearing_test_data_keeps_tours_staff_and_fleet(): void
+    {
+        $tour = TourDeparture::create(['title' => 'Batum', 'starts_at' => now()->addDays(5), 'price' => 1000]);
+        $vehicle = $tour->vehicles()->create(['name' => 'Otobüs', 'seat_count' => 46, 'cost' => 9000]);
+        $group = TourGroup::create(['tour_departure_id' => $tour->id]);
+        $group->passengers()->create(['first_name' => 'Test', 'last_name' => 'Yolcu']);
+        $group->forceFill(['departure_vehicle_id' => $vehicle->id])->saveQuietly();
+        $staff = $this->user([Permission::GroupsCreate]);
+        TourCommission::create(['tour_departure_id' => $tour->id, 'user_id' => $staff->id, 'amount' => 500]);
+        TourLedgerEntry::create(['tour_departure_id' => $tour->id, 'type' => 'expense', 'title' => 'Yemek', 'amount' => 100]);
+        $request = ReservationRequest::create(['name' => 'Kişi', 'phone' => '05321112233', 'people_count' => 1, 'kvkk_accepted' => true]);
+        $fleet = Vehicle::count();
+        $tours = TourDeparture::count();
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(SystemCommands::class)
+            ->callAction('run', arguments: ['key' => 'clear-operations'])
+            ->assertNotified('Test verilerini temizle tamamlandı');
+
+        foreach (['passengers', 'tour_groups', 'departure_vehicles', 'tour_commissions', 'tour_ledger_entries'] as $table) {
+            $this->assertDatabaseCount($table, 0);
+        }
+
+        $this->assertSame($tours, TourDeparture::count(), 'turlar kalmalı');
+        $this->assertNotNull($staff->fresh(), 'personel kalmalı');
+        $this->assertNotNull($request->fresh(), 'iletişim talebi kalmalı');
+        $this->assertSame($fleet, Vehicle::count(), 'araç filosu kalmalı');
+    }
+
+    public function test_clearing_test_data_asks_for_confirmation_in_the_terminal(): void
+    {
+        $this->assertGreaterThan(0, TourGroup::count());
+
+        $question = sprintf(
+            'Bu kayıtlar KALICI olarak silinecek: %d yolcu, %d grup, %d tura atanan araç, %d komisyon, %d kasa hareketi. Devam edilsin mi?',
+            Passenger::count(), TourGroup::count(), DepartureVehicle::count(), TourCommission::count(), TourLedgerEntry::count(),
+        );
+
+        $this->artisan('data:clear-operations')
+            ->expectsConfirmation($question, 'no')
+            ->assertFailed();
+
+        $this->assertGreaterThan(0, TourGroup::count(), 'onay verilmeden silinmemeli');
     }
 
     // ---------- Nabız ----------

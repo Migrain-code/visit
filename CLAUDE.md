@@ -131,7 +131,7 @@ offcanvas) + SCSS (site) · Tailwind 4 yalnız panel teması (`resources/css/fil
 | Tema (renkler: lacivert `#0d2544`, güneş sarısı `#ffc530`, gök mavisi `#0d7de0`) | `resources/scss/_variables.scss`, `_theme.scss` |
 | Marka | `public/images/brand/{logo,logo-light,logo-mark}.svg`, `icon-512.png`, `public/apple-touch-icon.png` (yer tutucu; Chrome ile SVG'den üretildi) |
 | Panel menü/PWA/alt bar | `app/Providers/Filament/AdminPanelProvider.php`, `resources/views/filament/partials/{pwa-head,mobile-tabs}.blade.php` |
-| Panel komut listesi | `app/Support/Console/CommandCatalog.php` (SEO komutları kaldırıldı) |
+| Panel komut listesi | `app/Support/Console/CommandCatalog.php` (SEO komutları kaldırıldı). "Test verilerini temizle" = `data:clear-operations` (`ClearOperationData`): yolcu, grup, tura atanan araç, komisyon, kasa hareketi siler; tur, personel, filo, ayarlar, talepler, başvurular kalır |
 | Site ayarları | `app/Filament/Pages/SiteSettings.php` (marka/iletişim/Instagram/logo, hero, tur bölümü, öne çıkanlar, operasyon, analitik) |
 | Göç: sadeleştirme + yetki + komisyon + kasa + iş başvurusu | `database/migrations/2026_09_23_000001_simplify_tours_and_add_finance.php` |
 | Örnek tur verisi | `database/seeders/data/tours.php` |

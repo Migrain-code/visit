@@ -63,6 +63,9 @@ final class CommandCatalog
             'allocate-upcoming' => self::entry('tours:allocate-upcoming', [], 'Yaklaşan turları yerleştir',
                 'Kalkışı yaklaşan turlarda araçsız kalan grupları boş koltuklara yerleştirir. Yerleşmiş gruplara dokunmaz; gruplar bölünmez. Normalde saat başı kendiliğinden çalışır.',
                 'operations'),
+            'clear-operations' => self::entry('data:clear-operations', ['--force' => true], 'Test verilerini temizle',
+                'Yolcuları, grupları, turlara atanan araçları (ücret, şoför, rehber), komisyonları ve kasa hareketlerini KALICI olarak siler. Turlar, personel ve yetkileri, araç filosu, site ayarları, iletişim talepleri ve iş başvuruları kalır. Geri alınamaz.',
+                'operations', danger: true),
 
             // ---------- Önbellek ----------
             'optimize' => self::entry('optimize', [], 'Önbellekleri oluştur',
